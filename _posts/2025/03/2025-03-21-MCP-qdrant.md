@@ -5,7 +5,6 @@ date: 2025-03-21 08:17:00 +0800
 categories: [LLM]
 tags: [LLM, 数据库, Qdrant, MCP, 向量数据库]
 description: 本文全面介绍如何利用Qdrant向量数据库与模型上下文协议(MCP)构建高效的LLM长期记忆系统，包含架构设计、实现步骤和应用场景详解。
-image: /assets/2025/03/llm_mem_qdrant.jpg
 ---
 
 ## 1. 引言：LLM的记忆挑战与解决方案
