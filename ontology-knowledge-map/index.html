@@ -1,0 +1,1757 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>本体驱动的AI数据管理 · 交互式知识图谱</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A0F1C'/%3E%3Ccircle cx='10' cy='12' r='3.2' fill='%2337C8AB'/%3E%3Ccircle cx='23' cy='9' r='2.6' fill='%234FA3FF'/%3E%3Ccircle cx='21' cy='23' r='3' fill='%238A7BFF'/%3E%3Cpath d='M12.6 13.4 20.6 10M12 14.8 18.6 21.6M22.4 11.4 22 20.4' stroke='%236B7694' stroke-width='1.4'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@600;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<style>
+/* ============ Design tokens ============ */
+:root{
+  --bg-0:#0A0F1C;          /* page ink navy */
+  --bg-1:#0E1628;          /* panel */
+  --bg-2:#141E36;          /* raised / hover */
+  --bg-3:#1A2744;          /* active */
+  --line:rgba(148,163,206,.14);
+  --line-strong:rgba(148,163,206,.28);
+  --tx-1:#EAF0FB;
+  --tx-2:#9AA7C4;
+  --tx-3:#66728F;
+  --acc:#37C8AB;           /* 青碧 本体 */
+  --acc-2:#4FA3FF;         /* 蓝 数据 */
+  --gold:#E8B64C;          /* 金 命题 */
+  --coral:#F08A6F;         /* 珊瑚 时代 */
+  --violet:#8A7BFF;        /* 紫 工程 */
+  --pink:#F28CA8;          /* 粉 Agent */
+  --green:#7ED98A;         /* 绿 应用 */
+  --cyan:#5BC8E8;          /* 青 未来 */
+  --radius:14px;
+  --radius-s:9px;
+  --shadow:0 18px 44px rgba(0,0,0,.45);
+  --font-serif:"Noto Serif SC","Songti SC","SimSun",serif;
+  --font-sans:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  --font-mono:ui-monospace,"SF Mono","JetBrains Mono",Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg-0);
+  color:var(--tx-1);
+  font-family:var(--font-sans);
+  font-size:15px;
+  line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+::selection{background:rgba(55,200,171,.32)}
+a{color:var(--acc);text-decoration:none}
+.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+
+/* ============ Top bar ============ */
+.topbar{
+  position:sticky;top:0;z-index:60;
+  display:flex;align-items:center;gap:18px;
+  padding:0 26px;height:60px;
+  background:rgba(10,15,28,.86);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}
+.brand-mark{
+  width:30px;height:30px;border-radius:8px;flex:none;
+  background:linear-gradient(135deg,var(--acc),var(--acc-2));
+  display:grid;place-items:center;
+  color:#071018;font-weight:900;font-size:15px;
+}
+.brand-name{font-weight:700;font-size:14.5px;white-space:nowrap;letter-spacing:.01em}
+.brand-name small{display:block;font-weight:400;color:var(--tx-3);font-size:10.5px;letter-spacing:.14em}
+.nav{display:flex;gap:4px;margin-left:10px;flex:1;flex-wrap:nowrap;overflow-x:auto}
+.nav a{
+  padding:7px 14px;border-radius:9px;color:var(--tx-2);
+  font-size:13.5px;white-space:nowrap;cursor:pointer;
+  transition:background .18s,color .18s;
+}
+.nav a:hover{color:var(--tx-1);background:var(--bg-2)}
+.nav a.on{color:#071018;background:var(--acc);font-weight:700}
+.searchbox{
+  display:flex;align-items:center;gap:8px;flex:none;
+  background:var(--bg-1);border:1px solid var(--line);
+  border-radius:10px;padding:0 12px;height:36px;width:230px;
+}
+.searchbox:focus-within{border-color:var(--acc)}
+.searchbox svg{flex:none;opacity:.55}
+.searchbox input{
+  background:none;border:0;outline:0;color:var(--tx-1);
+  font-family:var(--font-sans);font-size:13px;width:100%;
+}
+.searchbox input::placeholder{color:var(--tx-3)}
+
+/* ============ Layout ============ */
+main{max-width:1280px;margin:0 auto;padding:0 26px 60px}
+.view{display:none}
+.view.on{display:block;animation:fadeIn .35s ease both}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* section head */
+.sec-head{display:flex;align-items:baseline;gap:14px;margin:46px 0 18px}
+.sec-head .kicker{
+  font-size:11px;letter-spacing:.28em;color:var(--acc);font-weight:700;
+  display:flex;align-items:center;gap:8px;
+}
+.sec-head .kicker::after{content:"";width:34px;height:1px;background:var(--line-strong)}
+.sec-head h2{font-size:23px;font-weight:700;letter-spacing:.02em}
+.sec-head .note{color:var(--tx-3);font-size:12.5px;margin-left:auto}
+
+/* ============ Hero ============ */
+.hero{
+  position:relative;margin:0 -26px;padding:64px 26px 44px;
+  border-bottom:1px solid var(--line);
+  background:
+    radial-gradient(900px 420px at 82% -10%,rgba(55,200,171,.13),transparent 60%),
+    radial-gradient(760px 380px at 8% 108%,rgba(79,163,255,.10),transparent 62%),
+    linear-gradient(180deg,rgba(20,30,54,.55),transparent 70%);
+}
+.hero-inner{max-width:1280px;margin:0 auto}
+.hero .kicker{
+  display:inline-flex;align-items:center;gap:9px;
+  font-size:11.5px;letter-spacing:.3em;color:var(--acc);font-weight:700;
+  border:1px solid rgba(55,200,171,.4);background:rgba(55,200,171,.08);
+  padding:6px 14px;border-radius:999px;margin-bottom:22px;
+}
+.hero h1{
+  font-family:var(--font-serif);
+  font-size:clamp(34px,5.2vw,58px);font-weight:900;line-height:1.18;
+  letter-spacing:.02em;margin-bottom:16px;
+}
+.hero h1 .sub{display:block;font-size:.46em;font-weight:600;color:var(--tx-2);letter-spacing:.14em;margin-top:10px}
+.hero .thesis{
+  max-width:820px;font-size:15.5px;color:var(--tx-2);margin-bottom:34px;
+}
+.hero .thesis b{color:var(--tx-1);font-weight:700}
+
+/* claim chain */
+.claim-chain{
+  display:grid;grid-template-columns:1.05fr .16fr 1fr .16fr 1.05fr;
+  align-items:center;gap:6px;margin:38px 0 6px;max-width:980px;
+}
+.claim{
+  background:var(--bg-1);border:1px solid var(--line);border-radius:var(--radius);
+  padding:15px 17px;position:relative;min-height:104px;
+  transition:border-color .2s,transform .2s;
+}
+.claim:hover{border-color:rgba(55,200,171,.55);transform:translateY(-2px)}
+.claim .c-n{
+  font-family:var(--font-mono);font-size:11px;color:var(--acc);
+  letter-spacing:.18em;margin-bottom:7px;display:flex;align-items:center;gap:8px;
+}
+.claim .c-n::after{content:"";flex:1;height:1px;background:var(--line)}
+.claim .c-t{font-weight:700;font-size:14.5px;margin-bottom:4px;color:var(--tx-1)}
+.claim .c-d{font-size:12.5px;color:var(--tx-2);line-height:1.55}
+.arrow{display:grid;place-items:center;color:var(--tx-3)}
+.arrow svg{width:26px;height:18px}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:36px;max-width:980px}
+.stat{
+  background:var(--bg-1);border:1px solid var(--line);border-radius:var(--radius);
+  padding:16px 18px;display:flex;flex-direction:column;gap:2px;
+}
+.stat .s-n{font-family:var(--font-serif);font-size:30px;font-weight:900;color:var(--acc);line-height:1.1}
+.stat .s-n .unit{font-size:14px;color:var(--tx-2);margin-left:3px}
+.stat .s-l{font-size:12.5px;color:var(--tx-2)}
+.stat .s-s{font-size:11px;color:var(--tx-3)}
+.hero-meta{margin-top:22px;font-size:12px;color:var(--tx-3);letter-spacing:.05em}
+
+/* ============ Reading roadmap ============ */
+.roadmap{display:grid;gap:14px}
+.road-block{
+  display:grid;grid-template-columns:150px 1fr;gap:18px;
+  background:var(--bg-1);border:1px solid var(--line);border-radius:var(--radius);
+  padding:18px 20px;position:relative;
+}
+.road-block::before{
+  content:"";position:absolute;left:169px;top:18px;bottom:18px;width:1px;
+  background:repeating-linear-gradient(180deg,var(--line-strong) 0 5px,transparent 5px 11px);
+}
+.road-side{border-right:1px solid transparent}
+.road-stage{font-size:11px;letter-spacing:.24em;color:var(--tx-3);font-weight:700;margin-bottom:6px}
+.road-title{font-family:var(--font-serif);font-size:19px;font-weight:700;margin-bottom:4px}
+.road-desc{font-size:12.5px;color:var(--tx-2);line-height:1.6}
+.road-chips{display:flex;flex-wrap:wrap;gap:9px}
+.chip{
+  display:flex;align-items:center;gap:9px;
+  background:var(--bg-2);border:1px solid var(--line);border-radius:11px;
+  padding:10px 14px;cursor:pointer;min-width:0;max-width:430px;
+  transition:border-color .18s,background .18s,transform .18s;
+  text-align:left;font-family:var(--font-sans);color:var(--tx-1);
+}
+.chip:hover{border-color:rgba(55,200,171,.6);background:var(--bg-3);transform:translateY(-1px)}
+.chip .ch-n{
+  flex:none;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;
+  font-family:var(--font-mono);font-size:12px;font-weight:700;
+  background:rgba(55,200,171,.14);color:var(--acc);border:1px solid rgba(55,200,171,.3);
+}
+.chip .ch-t{font-weight:600;font-size:13px;line-height:1.35;white-space:nowrap}
+.chip .ch-d{font-size:11px;color:var(--tx-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+
+/* reading paths (示意) */
+.paths{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.path{
+  background:var(--bg-1);border:1px solid var(--line);border-radius:var(--radius);
+  padding:18px;
+}
+.path .p-tag{
+  display:inline-block;font-size:10.5px;letter-spacing:.16em;font-weight:700;
+  color:var(--gold);background:rgba(232,182,76,.1);border:1px solid rgba(232,182,76,.32);
+  padding:3px 10px;border-radius:999px;margin-bottom:11px;
+}
+.path .p-tag.mark{color:var(--acc);background:rgba(55,200,171,.1);border-color:rgba(55,200,171,.34)}
+.path h4{font-size:14.5px;margin-bottom:8px}
+.path ol{margin-left:18px;color:var(--tx-2);font-size:12.5px}
+.path ol li{margin-bottom:5px}
+.path .p-why{font-size:11.5px;color:var(--tx-3);margin-top:9px}
+
+/* ============ Chapters view ============ */
+.chap-list{display:grid;gap:12px}
+.chap{
+  background:var(--bg-1);border:1px solid var(--line);border-radius:var(--radius);
+  overflow:hidden;transition:border-color .2s;
+}
+.chap.open{border-color:rgba(55,200,171,.5)}
+.chap-head{
+  display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:16px;
+  padding:16px 20px;cursor:pointer;user-select:none;
+}
+.chap-head:hover{background:rgba(20,30,54,.5)}
+.chap-no{
+  width:52px;height:52px;border-radius:12px;display:grid;place-items:center;
+  font-family:var(--font-mono);font-size:19px;font-weight:700;
+  background:var(--bg-2);border:1px solid var(--line-strong);color:var(--tx-2);
+}
+.chap.open .chap-no{color:#071018;background:var(--acc);border-color:var(--acc)}
+.chap-title{font-size:16px;font-weight:700}
+.chap-claim{font-size:12.5px;color:var(--tx-2);margin-top:3px;max-width:760px}
+.chap-arrow{color:var(--tx-3);transition:transform .25s}
+.chap.open .chap-arrow{transform:rotate(180deg);color:var(--acc)}
+.chap-body{display:none;padding:2px 20px 20px;border-top:1px dashed var(--line);padding-top:16px}
+.chap.open .chap-body{display:block;animation:fadeIn .3s ease}
+.chap-body .secs{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-bottom:16px}
+.chap-body .secs .s{
+  background:var(--bg-2);border:1px solid var(--line);border-radius:10px;padding:11px 13px;
+  font-size:12.5px;color:var(--tx-2);line-height:1.6;
+}
+.chap-body .secs .s b{display:block;color:var(--tx-1);font-size:13px;margin-bottom:3px;font-weight:600}
+.chap-body .points{margin:0;padding:0;list-style:none}
+.chap-body .points li{
+  position:relative;padding-left:16px;font-size:13px;color:var(--tx-2);line-height:1.7;margin-bottom:6px;
+}
+.chap-body .points li::before{
+  content:"";position:absolute;left:2px;top:.72em;width:5px;height:5px;border-radius:50%;
+  background:var(--acc);opacity:.75;
+}
+.chap-body .points li b{color:var(--tx-1);font-weight:600}
+
+/* ============ Graph view ============ */
+.map-wrap{
+  display:grid;grid-template-columns:1fr 340px;gap:16px;margin-top:22px;
+  min-height:640px;
+}
+.map-canvas{
+  background:var(--bg-1);border:1px solid var(--line);border-radius:var(--radius);
+  position:relative;overflow:hidden;min-height:640px;
+}
+#graphChart{width:100%;height:640px}
+.map-hint{
+  position:absolute;left:14px;bottom:12px;z-index:5;
+  font-size:11px;color:var(--tx-3);background:rgba(10,15,28,.72);
+  border:1px solid var(--line);padding:5px 11px;border-radius:999px;
+  pointer-events:none;backdrop-filter:blur(6px);
+}
+.map-legend{
+  position:absolute;right:12px;top:12px;z-index:5;
+  background:rgba(10,15,28,.82);border:1px solid var(--line);border-radius:11px;
+  padding:10px 12px;display:grid;gap:5px;backdrop-filter:blur(8px);max-width:190px;
+}
+.map-legend button{
+  display:flex;align-items:center;gap:8px;background:none;border:0;color:var(--tx-2);
+  font-size:11.5px;cursor:pointer;padding:3px 4px;border-radius:6px;text-align:left;
+  font-family:var(--font-sans);transition:background .15s;
+}
+.map-legend button:hover{background:var(--bg-2);color:var(--tx-1)}
+.map-legend button i{width:9px;height:9px;border-radius:3px;flex:none}
+.map-legend button.off{opacity:.35;text-decoration:line-through}
+.map-detail{
+  background:var(--bg-1);border:1px solid var(--line);border-radius:var(--radius);
+  padding:20px;display:flex;flex-direction:column;gap:14px;max-height:640px;overflow:auto;
+}
+.map-detail .md-empty{
+  color:var(--tx-3);font-size:13px;line-height:1.8;
+  display:flex;flex-direction:column;gap:12px;
+}
+.map-detail .md-empty .md-nodes{display:flex;flex-wrap:wrap;gap:6px}
+.map-detail .md-empty .md-nodes span{
+  font-size:11px;background:var(--bg-2);border:1px solid var(--line);
+  padding:3px 9px;border-radius:999px;color:var(--tx-2);cursor:pointer;
+  transition:border-color .15s,color .15s;
+}
+.map-detail .md-empty .md-nodes span:hover{border-color:var(--acc);color:var(--acc)}
+.md-tag{font-size:10.5px;letter-spacing:.2em;font-weight:700;color:var(--acc);display:flex;align-items:center;gap:8px}
+.md-tag::after{content:"";flex:1;height:1px;background:var(--line)}
+.md-title{font-family:var(--font-serif);font-size:21px;font-weight:700;line-height:1.35}
+.md-chap{font-size:11.5px;color:var(--tx-3);letter-spacing:.06em}
+.md-desc{font-size:13.5px;color:var(--tx-2);line-height:1.8}
+.md-rels{border-top:1px dashed var(--line);padding-top:12px}
+.md-rels h5{font-size:11px;letter-spacing:.2em;color:var(--tx-3);font-weight:700;margin-bottom:8px}
+.md-rels .r{
+  display:flex;gap:7px;font-size:12.5px;padding:5px 0;color:var(--tx-2);align-items:baseline;
+}
+.md-rels .r .rel{color:var(--acc);font-size:11px;flex:none;width:56px;text-align:right}
+.md-rels .r button{
+  background:none;border:0;color:var(--tx-1);font-size:12.5px;cursor:pointer;padding:0;
+  text-align:left;font-family:var(--font-sans);line-height:1.5;
+}
+.md-rels .r button:hover{color:var(--acc);text-decoration:underline}
+.md-foot{font-size:10.5px;color:var(--tx-3);border-top:1px solid var(--line);padding-top:10px}
+
+/* ============ Mechanisms ============ */
+.mech{background:var(--bg-1);border:1px solid var(--line);border-radius:var(--radius);padding:22px 22px 20px;margin-bottom:20px}
+.mech-head{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
+.mech-head .m-no{font-family:var(--font-mono);font-size:12px;color:var(--acc);letter-spacing:.16em}
+.mech-head h3{font-size:18.5px;font-weight:700}
+.mech-lead{font-size:13px;color:var(--tx-2);margin-bottom:16px;max-width:860px}
+
+/* FTA: 事实-事理-行动 */
+.fta{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.fta .l{
+  border-radius:12px;padding:16px;border:1px solid var(--line);
+}
+.fta .l.l1{background:rgba(79,163,255,.08);border-color:rgba(79,163,255,.4)}
+.fta .l.l2{background:rgba(232,182,76,.07);border-color:rgba(232,182,76,.4)}
+.fta .l.l3{background:rgba(55,200,171,.07);border-color:rgba(55,200,171,.4)}
+.fta .l h4{font-size:14px;margin-bottom:4px}
+.fta .l.l1 h4{color:#7FB2FF}.fta .l.l2 h4{color:var(--gold)}.fta .l.l3 h4{color:var(--acc)}
+.fta .l .q{font-size:11px;color:var(--tx-3);margin-bottom:8px;letter-spacing:.08em}
+.fta .l ul{margin:0;padding:0;list-style:none;font-size:12.5px;color:var(--tx-2);line-height:1.65}
+.fta .l li{padding-left:14px;position:relative;margin-bottom:5px}
+.fta .l li::before{content:"";position:absolute;left:0;top:.66em;width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.7}
+.fta-flow{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--tx-3);font-size:12px}
+.fta-flow .f{flex:1;text-align:center;background:var(--bg-2);border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-size:11.5px;color:var(--tx-2)}
+.fta-flow svg{flex:none;width:20px}
+
+/* DIKW double loop */
+.dikw{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px}
+.dikw .loop{background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:15px}
+.dikw .loop h4{font-size:13.5px;margin-bottom:3px}
+.dikw .loop .who{font-size:11px;color:var(--tx-3);margin-bottom:9px}
+.dikw .loop .steps{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--tx-2);flex-wrap:wrap}
+.dikw .loop .steps span{background:var(--bg-3);border:1px solid var(--line);padding:4px 9px;border-radius:7px;white-space:nowrap}
+.dikw .loop .steps svg{width:13px;height:13px;flex:none}
+.dikw-hub{
+  background:rgba(55,200,171,.08);border:1px solid rgba(55,200,171,.42);border-radius:12px;
+  padding:14px 16px;font-size:12.5px;color:var(--tx-2);line-height:1.7;
+}
+.dikw-hub b{color:var(--acc)}
+
+/* 7+1 grid */
+.std-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.std{
+  background:var(--bg-2);border:1px solid var(--line);border-radius:11px;
+  padding:13px 14px;cursor:pointer;transition:border-color .18s,transform .18s;
+  text-align:left;font-family:var(--font-sans);
+}
+.std:hover{border-color:rgba(79,163,255,.55);transform:translateY(-1px)}
+.std .st-code{font-family:var(--font-mono);font-size:12.5px;font-weight:700;color:var(--acc-2);display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.std .st-code .st-n{font-size:10px;color:var(--tx-3);font-weight:400;letter-spacing:.1em}
+.std .st-name{font-size:12.5px;font-weight:700;color:var(--tx-1);margin-bottom:4px}
+.std .st-desc{font-size:11px;color:var(--tx-2);line-height:1.55}
+.std .st-eg{font-size:10.5px;color:var(--tx-3);margin-top:6px;line-height:1.5;font-family:var(--font-mono);background:rgba(10,15,28,.55);padding:5px 7px;border-radius:6px}
+.std.goal{background:rgba(232,182,76,.07);border-color:rgba(232,182,76,.4)}
+.std.goal .st-code{color:var(--gold)}
+
+/* 29句话 7类 */
+.n29{display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:10px}
+.n29 .t{
+  background:var(--bg-2);border:1px solid var(--line);border-radius:11px;padding:13px 14px;
+}
+.n29 .t .tn{font-family:var(--font-mono);font-size:11px;color:var(--acc);letter-spacing:.1em;margin-bottom:5px}
+.n29 .t h5{font-size:13px;margin-bottom:5px}
+.n29 .t p{font-size:11.5px;color:var(--tx-2);line-height:1.6}
+.n29 .t code{display:block;font-family:var(--font-mono);font-size:10px;color:var(--tx-3);margin-top:7px;line-height:1.55;background:rgba(10,15,28,.5);padding:5px 7px;border-radius:6px;overflow-wrap:break-word}
+
+/* point-line-plane */
+.plp{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.plp .node{
+  border-radius:12px;padding:15px;border:1px solid var(--line);position:relative;
+}
+.plp .node .p-tag{display:inline-block;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;font-weight:700;padding:3px 9px;border-radius:999px;margin-bottom:9px}
+.plp .node h4{font-size:14px;margin-bottom:5px}
+.plp .node p{font-size:11.5px;color:var(--tx-2);line-height:1.6;margin-bottom:7px}
+.plp .node ul{margin:0;padding:0;list-style:none;font-size:11px;color:var(--tx-3);line-height:1.6}
+.plp .node ul li{padding-left:12px;position:relative}
+.plp .node ul li::before{content:"";position:absolute;left:0;top:.6em;width:4px;height:4px;border-radius:50%;background:var(--tx-3)}
+.plp .p1{border-color:rgba(79,163,255,.45);background:rgba(79,163,255,.06)}
+.plp .p1 .p-tag{color:#7FB2FF;background:rgba(79,163,255,.12);border:1px solid rgba(79,163,255,.35)}
+.plp .p2{border-color:rgba(232,182,76,.45);background:rgba(232,182,76,.05)}
+.plp .p2 .p-tag{color:var(--gold);background:rgba(232,182,76,.12);border:1px solid rgba(232,182,76,.35)}
+.plp .p3{border-color:rgba(138,123,255,.45);background:rgba(138,123,255,.06)}
+.plp .p3 .p-tag{color:#A99EFF;background:rgba(138,123,255,.12);border:1px solid rgba(138,123,255,.35)}
+.plp .p4{border-color:rgba(55,200,171,.45);background:rgba(55,200,171,.06)}
+.plp .p4 .p-tag{color:var(--acc);background:rgba(55,200,171,.12);border:1px solid rgba(55,200,171,.35)}
+.plp-arrow{display:flex;align-items:center;justify-content:center;gap:8px;margin:10px 0;color:var(--tx-3);font-size:11px}
+.plp-arrow svg{width:22px}
+.plp-arrow .lbl{font-family:var(--font-mono);letter-spacing:.14em}
+
+/* agent pipeline */
+.agent-pipe{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.agent-pipe .ap{
+  background:var(--bg-2);border:1px solid var(--line);border-radius:10px;padding:12px 13px;position:relative;
+}
+.agent-pipe .ap .apn{font-family:var(--font-mono);font-size:10.5px;color:var(--pink);letter-spacing:.12em;margin-bottom:4px}
+.agent-pipe .ap h5{font-size:13px;margin-bottom:4px}
+.agent-pipe .ap p{font-size:11px;color:var(--tx-2);line-height:1.55}
+.agent-pipe .ap::after{
+  content:"";position:absolute;right:-9px;top:50%;width:8px;height:1px;background:var(--line-strong);
+}
+.agent-pipe .ap:last-child::after{display:none}
+.row-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.row-3 .cell{background:var(--bg-2);border:1px solid var(--line);border-radius:10px;padding:13px}
+.row-3 .cell h5{font-size:12.5px;margin-bottom:5px;color:var(--tx-1)}
+.row-3 .cell p{font-size:11.5px;color:var(--tx-2);line-height:1.6}
+
+/* ============ Governance ============ */
+.g-dual{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.g-world{border-radius:12px;padding:16px;border:1px solid var(--line)}
+.g-world.old{background:rgba(148,163,206,.05);border-color:var(--line)}
+.g-world.new{background:rgba(55,200,171,.06);border-color:rgba(55,200,171,.4)}
+.g-world h4{font-size:15px;margin-bottom:9px}
+.g-world.old h4{color:var(--tx-2)}
+.g-world.new h4{color:var(--acc)}
+.g-world table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:11.5px}
+.g-world th,.g-world td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;color:var(--tx-2)}
+.g-world th{font-weight:700;color:var(--tx-3);width:34%;font-size:11px;letter-spacing:.05em}
+.g-world td{width:66%}
+.proofs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.proof{
+  background:var(--bg-2);border:1px solid var(--line);border-radius:11px;padding:14px 15px;
+  transition:border-color .18s,transform .18s;
+}
+.proof:hover{border-color:rgba(91,200,232,.5);transform:translateY(-1px)}
+.proof .pf-n{font-family:var(--font-mono);font-size:10.5px;color:var(--cyan);letter-spacing:.14em;margin-bottom:5px}
+.proof h5{font-size:13.5px;margin-bottom:5px}
+.proof p{font-size:11.5px;color:var(--tx-2);line-height:1.6}
+.proof .pf-eg{font-size:10.5px;color:var(--tx-3);margin-top:7px;line-height:1.5}
+.triple{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;position:relative;margin:10px 0}
+.triple .w{
+  border-radius:14px;padding:18px;border:1px solid var(--line);position:relative;
+}
+.triple .w.w1{background:rgba(79,163,255,.07);border-color:rgba(79,163,255,.42)}
+.triple .w.w2{background:rgba(232,182,76,.07);border-color:rgba(232,182,76,.42)}
+.triple .w.w3{background:rgba(55,200,171,.08);border-color:rgba(55,200,171,.45)}
+.triple .w .w-n{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.16em;margin-bottom:6px}
+.triple .w.w1 .w-n{color:#7FB2FF}.triple .w.w2 .w-n{color:var(--gold)}.triple .w.w3 .w-n{color:var(--acc)}
+.triple .w h4{font-size:15px;margin-bottom:6px}
+.triple .w p{font-size:11.5px;color:var(--tx-2);line-height:1.65}
+.triple .w .w-carrier{font-size:10.5px;color:var(--tx-3);margin-top:8px;border-top:1px dashed var(--line);padding-top:7px}
+.triple-link{display:flex;justify-content:center;align-items:center;color:var(--tx-3);font-size:10px;letter-spacing:.2em;padding:4px 0}
+.triple-link svg{width:22px;height:14px}
+
+/* compare table */
+.cmp-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12.5px}
+.cmp-table caption{caption-side:top;text-align:left;font-size:11px;color:var(--tx-3);letter-spacing:.08em;margin-bottom:8px}
+.cmp-table th,.cmp-table td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;line-height:1.6}
+.cmp-table thead th{color:var(--tx-3);font-size:11px;letter-spacing:.1em;font-weight:700;background:rgba(20,30,54,.5)}
+.cmp-table tbody tr:hover{background:rgba(20,30,54,.4)}
+.cmp-table td b{color:var(--tx-1)}
+
+/* ============ footer ============ */
+footer{
+  border-top:1px solid var(--line);padding:26px 26px 34px;text-align:center;
+  color:var(--tx-3);font-size:11.5px;line-height:2;
+}
+footer .f-src{display:inline-flex;flex-wrap:wrap;gap:6px 14px;justify-content:center}
+
+/* ============ Responsive ============ */
+@media (max-width:920px){
+  .map-wrap{grid-template-columns:1fr}
+  .map-detail{max-height:none}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .claim-chain{grid-template-columns:1fr;gap:8px}
+  .arrow{transform:rotate(90deg);padding:2px 0}
+  .std-grid{grid-template-columns:repeat(2,1fr)}
+  .plp{grid-template-columns:1fr 1fr}
+  .paths{grid-template-columns:1fr}
+  .dikw{grid-template-columns:1fr}
+  .proofs{grid-template-columns:1fr 1fr}
+  .triple{grid-template-columns:1fr}
+  .triple-link{transform:rotate(90deg)}
+  .road-block{grid-template-columns:1fr}
+  .road-block::before{display:none}
+  .row-3{grid-template-columns:1fr}
+  .agent-pipe{grid-template-columns:1fr 1fr}
+  .agent-pipe .ap::after{display:none}
+  .g-dual{grid-template-columns:1fr}
+  .searchbox{width:44px;padding:0 10px}
+  .searchbox input{display:none}
+  .searchbox.open{width:180px}
+  .searchbox.open input{display:block}
+}
+@media (max-width:600px){
+  main{padding:0 16px 50px}
+  .hero{margin:0 -16px;padding:44px 16px 34px}
+  .topbar{padding:0 14px;gap:10px}
+  .brand-name{display:none}
+  .nav a{padding:12px 13px;font-size:13.5px}
+  .claim .c-d,.road-desc,.stat .s-l,.path ol,.path .p-why{font-size:14px}
+  .stat .s-s{font-size:12px}
+  .chap-head{grid-template-columns:50px 1fr auto;gap:10px;padding:13px 14px}
+  .chap-no{width:42px;height:42px;font-size:16px;border-radius:10px}
+  .chap-title{font-size:14.5px}
+  .chap-claim{font-size:11.5px}
+  .fta{grid-template-columns:1fr}
+  .std-grid{grid-template-columns:1fr}
+  .plp{grid-template-columns:1fr}
+  .proofs{grid-template-columns:1fr}
+  .stats{grid-template-columns:1fr 1fr}
+  .stat .s-n{font-size:24px}
+  .chip .ch-d{max-width:90px}
+  .map-canvas,#graphChart{min-height:520px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark">本</div>
+    <div class="brand-name">本体驱动的AI数据管理<small>INTERACTIVE KNOWLEDGE MAP</small></div>
+  </div>
+  <nav class="nav" id="topNav">
+    <a data-view="overview" href="#/overview" class="on">总览</a>
+    <a data-view="map" href="#/map">知识图谱</a>
+    <a data-view="chapters" href="#/chapters">十章全景</a>
+    <a data-view="mechanisms" href="#/mechanisms">核心机制</a>
+    <a data-view="governance" href="#/governance">落地与治理</a>
+  </nav>
+  <div class="searchbox" id="searchBox">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+    <input id="searchInput" type="text" placeholder="搜索概念，如 7+1 / 29句话 / DIKW" autocomplete="off">
+  </div>
+</header>
+
+<main>
+<!-- ================= VIEW: OVERVIEW ================= -->
+<section id="view-overview" class="view on">
+  <div class="hero">
+    <div class="hero-inner">
+      <div class="kicker">读书辅助 · 交互式知识地图 · 全书10章全景</div>
+      <h1>本体驱动的AI数据管理
+        <span class="sub">ONTOLOGY-DRIVEN AI DATA MANAGEMENT</span>
+      </h1>
+      <p class="thesis">全书核心命题：当数据的<b>主要消费者从「人」变成「机器」</b>，企业能否让 AI Agent 真正「懂业务」，不再取决于模型与算力，而取决于企业有没有一套让机器理解业务的<b>认知底座——业务本体</b>。本图谱将10章内容重构为可探索的知识网络，助你快速建立全书骨架、按需下钻。</p>
+
+      <div class="claim-chain" id="claimChain">
+        <div class="claim" data-goto="chapters,1">
+          <div class="c-n">STEP 01</div>
+          <div class="c-t">数据消费者变了</div>
+          <div class="c-d">从「人看报表」转向「机器学数据」，信息处理单元从比特到 Token，Agentic AI 崛起。</div>
+        </div>
+        <div class="arrow"><svg viewBox="0 0 26 18" fill="none"><path d="M1 9h22M17 3l6 6-6 6" stroke="currentColor" stroke-width="1.6"/></svg></div>
+        <div class="claim" data-goto="chapters,3">
+          <div class="c-n">STEP 02</div>
+          <div class="c-t">机器必须「懂业务」</div>
+          <div class="c-d">数据要承载事实（发生了什么）与事理（为什么、怎么做），从 KnowWhat 走向 KnowWhy / How。</div>
+        </div>
+        <div class="arrow"><svg viewBox="0 0 26 18" fill="none"><path d="M1 9h22M17 3l6 6-6 6" stroke="currentColor" stroke-width="1.6"/></svg></div>
+        <div class="claim" data-goto="map">
+          <div class="c-n">STEP 03</div>
+          <div class="c-t">业务本体 = 认知底座</div>
+          <div class="c-d">以本体做统一结构化表达，让业务语义可计算、可推理、可传承，成为 AI Agent 的「业务大脑」。</div>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="s-n num">10<span class="unit">章</span></div><div class="s-l">全书论证骨架</div><div class="s-s">从命题到新范式逐层推进</div></div>
+        <div class="stat"><div class="s-n num">7+1</div><div class="s-l">本体语义规范框架</div><div class="s-s">RDF/OWL/SKOS/SWRL/OWL-S/ODRL/SPARQL + 目标评估</div></div>
+        <div class="stat"><div class="s-n num">29<span class="unit">句话</span></div><div class="s-l">业务事理表达范式</div><div class="s-s">把「7+1」细化为机器可读的语义语法</div></div>
+        <div class="stat"><div class="s-n num">6<span class="unit">类</span></div><div class="s-l">碳硅可信证明体系</div><div class="s-s">身份/资产/授权/合约/追溯/贡献</div></div>
+      </div>
+
+      <p class="hero-meta">机械工业出版社 · 2026年5月 · ISBN 9787111810759 · 全书约186千字 · 《本体驱动的AI数据管理》编写组</p>
+    </div>
+  </div>
+
+  <div class="sec-head">
+    <span class="kicker">READING ROADMAP</span>
+    <h2>全书论证骨架</h2>
+    <span class="note">10章 × 4个推进阶段 · 点击章节卡片可跳转精读</span>
+  </div>
+  <div class="roadmap" id="roadmap">
+    <div class="road-block">
+      <div class="road-side">
+        <div class="road-stage">STAGE Ⅰ · 提出问题</div>
+        <div class="road-title">智能时代，治理逻辑失灵</div>
+        <div class="road-desc">数据消费者由人变机器，倒逼业务管理逻辑与数据治理范式全面重构。</div>
+      </div>
+      <div class="road-chips">
+        <button class="chip" data-goto="chapters,1"><span class="ch-n num">01</span><span class="ch-t">智能时代重构业务管理逻辑</span><span class="ch-d">Token · Agent · 数据燃料</span></button>
+        <button class="chip" data-goto="chapters,2"><span class="ch-n num">02</span><span class="ch-t">智能时代驱动数据治理重塑</span><span class="ch-d">四重转变 · 治理难点</span></button>
+        <button class="chip" data-goto="chapters,3"><span class="ch-n num">03</span><span class="ch-t">破局之道：统一结构化</span><span class="ch-d">业务建模 · DIKW双循环</span></button>
+      </div>
+    </div>
+    <div class="road-block">
+      <div class="road-side">
+        <div class="road-stage">STAGE Ⅱ · 核心概念</div>
+        <div class="road-title">本体：认知底座与数据体系</div>
+        <div class="road-desc">本体从哲学走向计算科学，成为联结主义+符号主义的企业AI必然选择，并落地为数据管理体系。</div>
+      </div>
+      <div class="road-chips">
+        <button class="chip" data-goto="chapters,4"><span class="ch-n num">04</span><span class="ch-t">本体源于哲学，驱动智能演进</span><span class="ch-d">事实-事理-行动 · 7+1 语义</span></button>
+        <button class="chip" data-goto="chapters,5"><span class="ch-n num">05</span><span class="ch-t">基于本体的企业AI数据管理体系</span><span class="ch-d">三类资产目录 · 事理模型</span></button>
+      </div>
+    </div>
+    <div class="road-block">
+      <div class="road-side">
+        <div class="road-stage">STAGE Ⅲ · 工程方法</div>
+        <div class="road-title">怎么建模、怎么让Agent用起来</div>
+        <div class="road-desc">低门槛的工程化建模范式 + 本体增强型 AI Agent 的完整工程链路。</div>
+      </div>
+      <div class="road-chips">
+        <button class="chip" data-goto="chapters,6"><span class="ch-n num">06</span><span class="ch-t">本体建模工程化方法</span><span class="ch-d">29句话 · 点线面路径</span></button>
+        <button class="chip" data-goto="chapters,7"><span class="ch-n num">07</span><span class="ch-t">本体增强 AI Agent 工程</span><span class="ch-d">意图对齐 · 增强推理</span></button>
+      </div>
+    </div>
+    <div class="road-block">
+      <div class="road-side">
+        <div class="road-stage">STAGE Ⅳ · 落地演进</div>
+        <div class="road-title">场景落地、可信治理与未来范式</div>
+        <div class="road-desc">从六大应用模式到碳硅协同治理，再到三重世界的新企业形态。</div>
+      </div>
+      <div class="road-chips">
+        <button class="chip" data-goto="chapters,8"><span class="ch-n num">08</span><span class="ch-t">典型应用场景与探索实践</span><span class="ch-d">六大模式 · 落地策略</span></button>
+        <button class="chip" data-goto="chapters,9"><span class="ch-n num">09</span><span class="ch-t">企业碳硅协同的智能体治理</span><span class="ch-d">区块链 · 六类证明</span></button>
+        <button class="chip" data-goto="chapters,10"><span class="ch-n num">10</span><span class="ch-t">企业发展新范式、新形态</span><span class="ch-d">三重世界 · 双重学习</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-head">
+    <span class="kicker">SUGGESTED PATHS</span>
+    <h2>三条阅读路径 <span style="font-size:11px;color:var(--tx-3);font-weight:400">（示意：以下路径为编者建议，非书中内容）</span></h2>
+  </div>
+  <div class="paths">
+    <div class="path">
+      <span class="p-tag">精读 · 完整理解</span>
+      <h4>按章通读</h4>
+      <ol>
+        <li>第1→3章：理解命题与破局逻辑</li>
+        <li>第4→5章：建立本体与数据体系概念</li>
+        <li>第6→7章：掌握建模方法与Agent工程</li>
+        <li>第8→10章：看落地、治理与未来</li>
+      </ol>
+      <div class="p-why">适合：想完整吸收全书论证体系的读者。</div>
+    </div>
+    <div class="path">
+      <span class="p-tag mark">管理 · 速览决策</span>
+      <h4>先结论后方法</h4>
+      <ol>
+        <li>读第1、3、8章：命题、破局与价值验证</li>
+        <li>跳第9章：碳硅协同治理与可信体系</li>
+        <li>跳第10章：新范式与新形态</li>
+        <li>需要时再下钻第4-7章方法细节</li>
+      </ol>
+      <div class="p-why">适合：决策者快速判断「本体驱动」是否值得投入。</div>
+    </div>
+    <div class="path">
+      <span class="p-tag mark">实践 · 上手落地</span>
+      <h4>按场景反查</h4>
+      <ol>
+        <li>先看知识图谱，定位你的业务痛点</li>
+        <li>读第6章「29句话」+「点线面」</li>
+        <li>读第7章 Agent 工程链路</li>
+        <li>对照第8章六大模式选型</li>
+      </ol>
+      <div class="p-why">适合：实施团队直接指导项目启动。</div>
+    </div>
+  </div>
+
+  <div class="sec-head">
+    <span class="kicker">GET STARTED</span>
+    <h2>下一步</h2>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px" class="next-cards">
+    <button class="chip" data-goto="map" style="align-items:flex-start;flex-direction:column;gap:6px;max-width:none">
+      <span class="ch-n num" style="width:auto;height:auto;padding:4px 10px;border-radius:999px">图谱</span>
+      <span class="ch-t" style="font-size:14px;white-space:normal">探索概念关系网络</span>
+      <span class="ch-d" style="white-space:normal;max-width:none">68个核心概念、9大主题域的关联关系，点击节点查看书中出处。</span>
+    </button>
+    <button class="chip" data-goto="mechanisms" style="align-items:flex-start;flex-direction:column;gap:6px;max-width:none">
+      <span class="ch-n num" style="width:auto;height:auto;padding:4px 10px;border-radius:999px;background:rgba(79,163,255,.14);color:#7FB2FF;border-color:rgba(79,163,255,.35)">机制</span>
+      <span class="ch-t" style="font-size:14px;white-space:normal">看懂核心机制图解</span>
+      <span class="ch-d" style="white-space:normal;max-width:none">事实-事理-行动、DIKW双循环、7+1语义、29句话、点线面、Agent链路。</span>
+    </button>
+    <button class="chip" data-goto="chapters" style="align-items:flex-start;flex-direction:column;gap:6px;max-width:none">
+      <span class="ch-n num" style="width:auto;height:auto;padding:4px 10px;border-radius:999px;background:rgba(232,182,76,.14);color:var(--gold);border-color:rgba(232,182,76,.35)">十章</span>
+      <span class="ch-t" style="font-size:14px;white-space:normal">按章精读核心主张</span>
+      <span class="ch-d" style="white-space:normal;max-width:none">每章的核心主张、小节地图与要点清单，源自原书逐章提炼。</span>
+    </button>
+  </div>
+</section>
+
+<!-- VIEW:MAP -->
+<section id="view-map" class="view">
+  <div class="sec-head" style="margin-top:34px">
+    <span class="kicker">CONCEPT GRAPH</span>
+    <h2>核心概念知识图谱</h2>
+    <span class="note">9大主题 · 68个概念 · 拖拽/缩放/点选下钻 · 图中内容均出自原书</span>
+  </div>
+  <div class="map-wrap">
+    <div class="map-canvas">
+      <div id="graphChart"></div>
+      <div class="map-hint">拖拽移动 · 滚轮缩放 · 点击节点查看详情 · 再次点击收起</div>
+    </div>
+    <aside class="map-detail" id="mapDetail">
+      <div class="md-empty">
+        <div>点击图谱中的任意节点，这里会展开该概念的<b style="color:var(--tx-1)">书中定义、出处章节与关联概念</b>。图谱按9大主题着色：</div>
+        <div class="md-nodes">
+          <span>命题 · 认知底座</span><span>智能时代</span><span>治理重塑</span><span>本体与语义</span><span>数据体系</span><span>建模工程</span><span>Agent工程</span><span>应用落地</span><span>演进与治理</span>
+        </div>
+        <div>也可以试试点击下方的高频入口节点：</div>
+        <div class="md-nodes" id="quickNodes"></div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- VIEW:CHAPTERS -->
+<section id="view-chapters" class="view">
+  <div class="sec-head" style="margin-top:34px">
+    <span class="kicker">CHAPTERS</span>
+    <h2>十章全景：核心主张与要点</h2>
+    <span class="note">每章「核心主张」为原书内容的结构化提炼 · 点击卡片展开小节与要点</span>
+  </div>
+  <div class="chap-list" id="chapList">
+
+    <article class="chap" data-chap="1">
+      <div class="chap-head">
+        <div class="chap-no num">01</div>
+        <div>
+          <div class="chap-title">智能时代重构业务管理逻辑</div>
+          <div class="chap-claim">信息处理单元从比特到Token，Agentic AI崛起，智能体成为业务新主体；数据从「业务记录」进化为承载事实与事理的完整载体，数据消费者由人转向机器。</div>
+        </div>
+        <div class="chap-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+      </div>
+      <div class="chap-body">
+        <div class="secs">
+          <div class="s"><b>1.1 开启智能新纪元</b>信息处理单元从比特到Token；大模型的智能跃升；Agentic AI的崛起。</div>
+          <div class="s"><b>1.2 智能体成为业务新主体</b>从「规则驱动」到「自主进化」；智能体成为业务人员「超级伙伴」；「建模思维」成为协同关键。</div>
+          <div class="s"><b>1.3 数据是基石与核心驱动力</b>数据从业务记录变为驱动智能体进化的「燃料」；成为连接业务与智能体的纽带；成为业务事实与事理的完整载体。</div>
+        </div>
+        <ul class="points">
+          <li><b>竞争焦点迁移</b>：从「谁有更强的模型和算力」转向「谁的AI更懂自身业务」——智能决策上限取决于事实与事理在数据中的耦合深度。</li>
+          <li><b>KnowWhat → KnowWhy/How</b>：业务事实回答「发生了什么」，业务事理回答「为什么这样做、如何行动」，两者必须显性化、结构化沉淀到数据中。</li>
+          <li><b>四全载体</b>：全模态兼容、全流程贯通、全要素统一、全周期连续，让数据成为「业务认知的完整表达」。</li>
+          <li><b>人怎么用</b>：招「引擎」而非「燃料」，通过建模工程与AI深度融合，把老专家隐性经验转化为机器可理解、可复用的形式。</li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="chap" data-chap="2">
+      <div class="chap-head">
+        <div class="chap-no num">02</div>
+        <div>
+          <div class="chap-title">智能时代驱动数据治理重塑</div>
+          <div class="chap-claim">数据治理必须完成面向AI的关键转变：赋能大模型掌握企业私域资产、让AI遵循企业逻辑、降低模型幻觉——从「管理数据」走向「管理知识」。</div>
+        </div>
+        <div class="chap-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+      </div>
+      <div class="chap-body">
+        <div class="secs">
+          <div class="s"><b>2.1 关键需求</b>赋能大模型掌握企业私域资产；破除知识壁垒、消除数据孤岛；让AI Agent遵循企业逻辑规划执行；降低模型幻觉、提升决策可信度。</div>
+          <div class="s"><b>2.2 四重转变</b>从面向业务人员到赋能AI伙伴；从功能叠加到认知融合；从汇聚事实到贯穿事理与行动；像管理数据一样管理知识。</div>
+          <div class="s"><b>2.3 转变难点</b>静态向动态转型挑战；确定性向创造力升级难题；规模与异构治理瓶颈；知识体系治理短板。</div>
+        </div>
+        <ul class="points">
+          <li><b>传统治理面向人</b>：人写程序、人看报表、人做判断——这套逻辑在AI时代已然滞后。</li>
+          <li><b>给AI数字员工设权限更难</b>：权限少了无法自主完成任务，权限多了面临失控风险；运维、安全、质量全是新课题。</li>
+          <li><b>「像管理数据一样管理知识」</b>：企业专有知识成为需要被治理的核心资产。</li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="chap" data-chap="3">
+      <div class="chap-head">
+        <div class="chap-no num">03</div>
+        <div>
+          <div class="chap-title">智能时代数据治理的破局之道：统一结构化</div>
+          <div class="chap-claim">破局在于构建「统一结构化表达」，以业务本体弥合「人类业务语义」与「机器可计算逻辑」的结构性断层；人与AI各有一个DIKW循环，由本体双向联接。</div>
+        </div>
+        <div class="chap-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+      </div>
+      <div class="chap-body">
+        <div class="secs">
+          <div class="s"><b>3.1 智能时代的业务建模</b>「人用」到「人机共用」双向适配；「业务逻辑+系统逻辑」双轮驱动；「事实-事理-行动」一体化动态模型；企业专有知识资产模型化。</div>
+          <div class="s"><b>3.2 连接业务数据、逻辑与行动</b>多源异构多模态数据的接入互联；整合碎片化、冗余的多种知识表征；连接系统分散、功能割裂的IT应用。</div>
+          <div class="s"><b>3.3 人机通用的结构化表达</b>支撑业务活动中的人；支撑业务活动中的AI；人与AI的DIKW双循环。</div>
+        </div>
+        <ul class="points">
+          <li><b>DIKW双循环</b>：人的循环=知识图谱化，AI的循环=本体模型化，人+AI=数字孪生化；本体是联接枢纽，做双向转化。</li>
+          <li><b>双向转化示例</b>：专家意图「连续三代同亲本可能退化」→ 本体转化为AI可执行规则「IF连续三代同亲本 THEN 切换育种路径」；AI模拟结果反哺为专家可理解的自然语言反馈。</li>
+          <li><b>复合智慧</b>：人应对模糊开放的新情境、突破规则边界；AI处理清晰高频场景、确保规则内最优。</li>
+          <li><b>艾略特之问</b>：数据无语义对齐则信息丢失，信息无规则显式化则知识丢失，知识无决策判断则智慧丢失。</li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="chap" data-chap="4">
+      <div class="chap-head">
+        <div class="chap-no num">04</div>
+        <div>
+          <div class="chap-title">本体源于哲学概念，驱动智能演进</div>
+          <div class="chap-claim">本体从哲学「事物本源」走向计算科学，2004年W3C推出RDF/OWL统一标准；联结主义+符号主义是企业AI的必然选择，本体增强AI推理成为核心机理。</div>
+        </div>
+        <div class="chap-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+      </div>
+      <div class="chap-body">
+        <div class="secs">
+          <div class="s"><b>4.1 本体的前世今生</b>从事物本源到计算科学（亚里士多德→笛卡尔→康德→卡尼曼→知识表示）；从「对象-属性-关系」到「事实-事理-行动」；从语义互联到语义推理；从符号主义到联结主义。</div>
+          <div class="s"><b>4.2 企业AI的必然选择</b>纯概率推理难成企业AI落地有效路径；本体增强AI推理的核心机理；本体融合AI技术赋能企业智能。</div>
+          <div class="s"><b>4.3 统一结构化表达</b>W3C本体建模标准语言体系；AI成为「高级本体建模师」。</div>
+          <div class="s"><b>4.4 融入企业架构</b>本体与企业架构（EA）；本体与实体建模；本体与知识图谱；本体库与数据湖、知识库；本体与SaaS。</div>
+        </div>
+        <ul class="points">
+          <li><b>符号学三要素</b>：符号载体（对人=自然语言，对AI=形式化语言）、所指对象同一、业务解释一致——这是「人机通用」的深层原理。</li>
+          <li><b>Token与本体</b>：Token是符号的物质载体，本体是符号的意义框架；本体让事物本质在人与AI之间无歧义地表达、传递与执行。</li>
+          <li><b>本体赋能Prompt</b>：解决自由文本不可控、不可解释与「Prompt孤岛」两大问题，让Prompt从「个人经验」升级为「企业标准」。</li>
+          <li><b>传统建模 vs 本体建模</b>：前者描述静态快照「有什么」；后者升级为「事实-事理-行动」深层表达，支撑AI理解与自主执行。</li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="chap" data-chap="5">
+      <div class="chap-head">
+        <div class="chap-no num">05</div>
+        <div>
+          <div class="chap-title">基于本体的企业AI数据管理体系</div>
+          <div class="chap-claim">企业数据管理的重心从「为人服务」转向「为AI服务」：构建面向作业、分析、AI的三类数据资产目录，以「7+1」语义规范实现事理模型统一结构化表达。</div>
+        </div>
+        <div class="chap-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+      </div>
+      <div class="chap-body">
+        <div class="secs">
+          <div class="s"><b>5.1 三类数据资产目录</b>面向作业（5层结构，2026年1月底1800+业务对象、300+数据Owner）；面向分析（880+分析主题、230+数据Owner）；面向AI（围绕AI数据集、事实数据、事理模型、推理结果）。</div>
+          <div class="s"><b>5.2 支撑AI增强训练</b>筛选高质量、合规的AI数据集；AI数据集构建；数据Owner与AI数据集责任人关系；多维AI数据集分类；统一ID及版本标识。</div>
+          <div class="s"><b>5.3 支撑AI推理</b>事实数据（实时感知）、事理模型（按企业规则推理）、推理结果（可控、可解释、可审计）。</div>
+          <div class="s"><b>5.4 「7+1」语义规范框架</b>7类业务语义规范匹配W3C技术标准 + 1个目标与评估维度，细化为29种标准化表达范式。</div>
+        </div>
+        <ul class="points">
+          <li><b>AI侧目录核心锚点</b>：L3为「AI业务数据/本体」——需AI替代人工执行的具体业务任务或决策，本质是AI任务的管理单元；建设遵循「小切口起步、逐步抽象」。</li>
+          <li><b>推理数据资产三件套</b>：事实数据（结构化表/RAG知识库/Graph RAG知识库）+ 事理模型 + 推理结果，构成「事实数据—逻辑决策—结果记录」全链路。</li>
+          <li><b>荔枝示例</b>：L1种植业 → L2荔枝 → L3病虫害防治AI Agent（8个具体任务）→ L4事实/事理/推理数据共同支撑。</li>
+          <li><b>明事实、懂事理、会行动</b>：汽车售后案例中，Agent基于本体把「异响录音+故障码P0011」综合判定为「进气系统状态异常」，再按SWRL规则推出「需更换进气凸轮轴执行器」，最终由ODRL约束「可发起维修工单、不得直接确认费用」。</li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="chap" data-chap="6">
+      <div class="chap-head">
+        <div class="chap-no num">06</div>
+        <div>
+          <div class="chap-title">低门槛快速落地的本体建模工程化方法</div>
+          <div class="chap-claim">把「7+1」细化为「29句话」范式供AI与业务专家协作萃取知识；AI建模+专家审核、资产入库「建用优复」；按「点线面」迭代实施，连接存量数据湖。</div>
+        </div>
+        <div class="chap-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+      </div>
+      <div class="chap-body">
+        <div class="secs">
+          <div class="s"><b>6.1 预处理</b>AI基于显性知识提炼「29句话」；业务专家基于「29句话」提取隐性知识；按逻辑正确、描述清晰、内容完备审核。</div>
+          <div class="s"><b>6.2 AI建模与专家审核</b>调用懂W3C标准的大模型建模；双大模型协同校验；可视化工具语法校验+专家内容把关；业务场景测试用例验证。</div>
+          <div class="s"><b>6.3 资产入库</b>存入专用语义数据库；数据层+语义层双重运维；「建用优复」全生命周期运营。</div>
+          <div class="s"><b>6.4 工具平台</b>符合W3C标准的自校验建模能力；图形化可视化展示；语义存储与高效检索。</div>
+          <div class="s"><b>6.5 「点线面」实施路径</b>小切口场景（点）→ 纵轴领域整合（线）→ 横轴跨领域贯通（面）→ 存量数据湖、知识图谱连接。</div>
+        </div>
+        <ul class="points">
+          <li><b>29句话示例（荔枝病虫害）</b>：荔枝树属性（品种/树龄/挂果量）；荔枝蝽subclassOf半翅目；「白糖罂」==「蜂糖罂」等价类；温度>25℃且湿度>80% → 触发霜疫霉病预警（SWRL）；防治流程=巡园-识别-配药-施药；施药后1小时内填写农事记录否则锁定下一环节（ODRL）。</li>
+          <li><b>小切口四步法</b>：定义场景（产出29句话雏形）→ 快速建模与数据连接 → 开发轻量MVP → 闭环验证与迭代。</li>
+          <li><b>纵轴整合</b>：沿「公共层→领域层→实例层→动作层」，按「关联-统一-对齐-标准化」消除场景间语义歧义与模型冗余。</li>
+          <li><b>横轴整合</b>：按「识别交互点-建立语义映射-构建桥接本体与联邦查询」，用联邦式集成实现跨领域「对话」。</li>
+          <li><b>存量连接三阶段</b>：资产整合1.0（IT驱动，能看见）→ 增量创新2.0（业务驱动，能做对）→ 战略统一3.0（战略驱动，全智能）。</li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="chap" data-chap="7">
+      <div class="chap-head">
+        <div class="chap-no num">07</div>
+        <div>
+          <div class="chap-title">基于企业私域知识的本体增强AI Agent工程</div>
+          <div class="chap-claim">本体不是静态知识仓库，而是动态参与决策的「事理引擎」：建立「意图-本体-模型」动态协同机制，实现意图设计→对齐→检索→嵌入，驱动增强推理与行动转化。</div>
+        </div>
+        <div class="chap-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+      </div>
+      <div class="chap-body">
+        <div class="secs">
+          <div class="s"><b>7.1 基于意图的本体调用</b>意图设计（明确目标-拆解子意图-优化颗粒度）；意图与本体对齐（三类范式）；本体检索与调用（四种机制、最小必要本体）；本体嵌入AI模型（Prompt/微调/增训）。</div>
+          <div class="s"><b>7.2 增强推理</b>基于事实数据的实时感知；感知+事理融合推理；感知、推理与目标的综合决策。</div>
+          <div class="s"><b>7.3 决策到行动转化</b>指令直驱型；人工介入型；业务协同执行型。</div>
+          <div class="s"><b>7.4-7.5 构建与实施</b>五大组件：动态事实关联、动态Action关联、本体服务支撑、AI大模型智能引擎、运行支撑框架；五步实施路径。</div>
+        </div>
+        <ul class="points">
+          <li><b>对齐三范式</b>：直接固定映射（简单僵化）→ 规则引导语义映射（如湿度>80%且温度>25℃激活霜疫霉病本体）→ 本体层自主推理对齐（探索式推理，最前瞻）。</li>
+          <li><b>检索四机制</b>：图数据库检索（SPARQL精查，高风险决策）、图向量库检索（模糊语义）、记忆增强调用（长短时记忆）、AI Agent Skills封装（模块化、多Agent协作）。</li>
+          <li><b>嵌入三方法</b>：Prompt嵌入（首选，保留显式逻辑链）、指令微调嵌入（高频标准化任务）、数据增训嵌入（合成数据补充）。</li>
+          <li><b>行动转化三型</b>：指令直驱（明确规则/低风险/后果可控）；人工介入（人做关键判断、分层介入）；业务协同（主Agent拆解→事件总线下发→子Agent联动→反馈优化）。</li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="chap" data-chap="8">
+      <div class="chap-head">
+        <div class="chap-no num">08</div>
+        <div>
+          <div class="chap-title">典型应用场景与探索实践</div>
+          <div class="chap-claim">优选语义复杂、规则明确、高合规场景，沉淀六大核心应用模式；落地遵循「穿刺式验证→小切口驱动→AI转译」递进策略。</div>
+        </div>
+        <div class="chap-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+      </div>
+      <div class="chap-body">
+        <div class="secs">
+          <div class="s"><b>8.1 场景选择</b>本体激活AI三大核心价值（拉齐个体差异/动态决策行动/无限智能供给）；瞄准业务痛点、聚焦投入产出；优选语义复杂、规则明确、高合规场景。</div>
+          <div class="s"><b>8.2 六大应用模式</b>智能流程自动化；数据规则驱动的自主运营；多维度一体化智能决策；跨领域动态智能协同；基于知识解析的自主推理；多场景综合统筹的PDCA闭环。</div>
+          <div class="s"><b>8.3 落地策略</b>穿刺式验证（能不能做）；场景小切口（价值在哪）；存量知识资产AI转译（成本多高）；实施落地典型问题。</div>
+        </div>
+        <ul class="points">
+          <li><b>流程自动化</b>：CTS代码测试服务等场景，OWL-S把流程从静态步骤变动态Action（前提+效果），AI Agent基于本体自主执行信息收集、申请、审批与执行。</li>
+          <li><b>自主运营</b>：产品配置从人工2小时降至AI Agent 2分钟（书中图8-3所示对比），配置准确率提升至可商用水平。</li>
+          <li><b>智能决策</b>：供应调度中，复杂异常定位从小时级压缩至分钟级；库存周转与交付及时率显著提升。</li>
+          <li><b>跨域协同</b>：荔枝「四时农事」场景，「眼睛（感知）—大脑（8个串联Agent+本体）—手脚（无人机/水肥装备）」全链路，巡园效率从天级到分钟级。</li>
+          <li><b>穿刺式验证</b>：Bootcamps「特种兵」模式（业务数据专家+本体工程师+AI工程师+项目经理）；示例：10条真实需求准确率80%，一周迭代后达90%。</li>
+          <li><b>「1+4」协同</b>：总体组统筹 + 「眼睛」「手脚」「大脑」「本体认知」四小队。</li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="chap" data-chap="9">
+      <div class="chap-head">
+        <div class="chap-no num">09</div>
+        <div>
+          <div class="chap-title">企业碳硅协同的智能体治理理念</div>
+          <div class="chap-claim">规则驱动的旧世界与自主进化的新世界通过MCP语义握手；以区块链构建去中心化「公证处与账本」，用六类证明支撑碳基人与硅基Agent的可信协作。</div>
+        </div>
+        <div class="chap-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+      </div>
+      <div class="chap-body">
+        <div class="secs">
+          <div class="s"><b>9.1 高阶治理框架</b>规则驱动的旧世界；自主进化的新世界；新旧世界协同交互与融合发展（MCP语义握手、非侵入式赋能）；去中心化「公证处」与「账本」。</div>
+          <div class="s"><b>9.2 六类证明</b>身份证明（碳硅混合身份档案链DID）；资产证明（数字资产产权链）；授权证明（权限凭证链+智能锁）；合约证明（智能合约流水线）；追溯证明（全链路操作哈希链）；贡献证明（贡献值计量链）。</div>
+          <div class="s"><b>9.3 本体建模演进</b>「本体约束+AI智能+人类监督」协同范式；静态治理向动态治理演进；多模态本体建模；大模型成为更好的本体建模师；工程化与全链路工具生态。</div>
+        </div>
+        <ul class="points">
+          <li><b>旧世界 vs 新世界</b>：系统为中心（绝对确定）→ 智能为中心（拥抱不确定性）；数据副产品 → 数据生产资料；烟囱式集成 → 协同自治架构。</li>
+          <li><b>MCP是关键桥梁</b>：嵌入而非侵入——旧世界负责执行与存储，新世界负责理解与调度，双向进化。</li>
+          <li><b>六类证明落地（合同管理示例）</b>：身份绑定合同专员与AI起草Agent；资产锚定模板库权属；授权限定AI操作边界与24小时时效；合约把审批规则代码化；追溯记录每次修改哈希；贡献自动核算各方参与价值。</li>
+          <li><b>业界探索</b>：0G（模型哈希+推理证明）、Fetch.ai（Agent去中心化身份+智能合约协作）、Near Protocol（账户抽象权限控制+众包AI）——书中标注为理论性前沿探索。</li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="chap" data-chap="10">
+      <div class="chap-head">
+        <div class="chap-no num">10</div>
+        <div>
+          <div class="chap-title">企业发展新范式、新形态</div>
+          <div class="chap-claim">企业业务将在物理世界、逻辑世界、智能世界的三重协同中演进；AI通过面向物理现实与业务逻辑的双重学习，实现「知行合一」，推动智能原生业务与四维融合的组织变革。</div>
+        </div>
+        <div class="chap-arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+      </div>
+      <div class="chap-body">
+        <div class="secs">
+          <div class="s"><b>10.1 三重世界协同模型</b>物理世界（世界模型）、逻辑世界（本体模型）、智能世界（大模型+Agent）；面向逻辑世界与物理世界的AI双重学习目标；本体模型与世界模型的协同与融合。</div>
+          <div class="s"><b>10.2 企业业务与管理新形态</b>业务形态演进：智能原生业务；企业数智化新范式：知识建模+AI自主实现；管理组织变革：知识、数据、流程、IT四维融合。</div>
+        </div>
+        <ul class="points">
+          <li><b>三重世界</b>：物理世界把不确定性转化为可计算、可干预、可优化的确定性（试错成本趋近于零）；逻辑世界让隐性知识显性化、个体智慧组织化（业务操作系统）；智能世界实现感知-推演-决策-执行的闭环，边际成本随规模下降。</li>
+          <li><b>本体×世界模型</b>：本体是「逻辑内核与知识契约」（业务头脑），世界模型是「现实引擎与因果镜像」（物理身体）；四层动态融合：语义锚定状态对齐→规则约束因果联合推理→知识进化世界演化共生→仿真预演现实执行闭环。</li>
+          <li><b>双重学习</b>：物理世界学习（万物语义/因果建模/物理直觉）+ 逻辑世界学习（业务语义/决策认知/规则演化）；从「人在环中」走向「AI在企业环中」，五大提升路径。</li>
+          <li><b>数字与实体共生</b>：数字复刻是「有损抽象」，需嵌入社会性与伦理层；真正赢家是精通数字与实体融合的「织网者」。</li>
+        </ul>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<!-- VIEW:MECHANISMS -->
+<section id="view-mechanisms" class="view">
+  <div class="sec-head" style="margin-top:34px">
+    <span class="kicker">MECHANISMS</span>
+    <h2>核心机制图解</h2>
+    <span class="note">6组全书核心机制 · 结构与案例均出自原书</span>
+  </div>
+
+  <!-- 1 事实-事理-行动 -->
+  <div class="mech">
+    <div class="mech-head"><span class="m-no">M-01</span><h3>事实-事理-行动：本体建模的深层表达框架</h3></div>
+    <div class="mech-lead">传统建模用「对象-属性-关系」描述静态快照「有什么」；本体建模升级为「事实-事理-行动」，回答「发生了什么、为什么、怎么做」，让AI可理解、可推理、可执行。示例来自书中农业生产场景。</div>
+    <div class="fta">
+      <div class="l l1">
+        <h4>事实层 Facts</h4>
+        <div class="q">回答「发生了什么」</div>
+        <ul>
+          <li>地块A当前虫口密度 40头/百株</li>
+          <li>土壤湿度 75%</li>
+          <li>作物处于抽穗期</li>
+        </ul>
+      </div>
+      <div class="l l2">
+        <h4>事理层 Rationale</h4>
+        <div class="q">回答「为什么这样、如何行动」</div>
+        <ul>
+          <li>抽穗期禁用高毒农药</li>
+          <li>虫口密度＞30 且 湿度＞70% 时，须在48小时内施药</li>
+        </ul>
+      </div>
+      <div class="l l3">
+        <h4>行动层 Action</h4>
+        <div class="q">落实具体业务操作</div>
+        <ul>
+          <li>生成喷洒吡虫啉的作业指令</li>
+          <li>驱动无人机执行作业</li>
+          <li>执行结果反馈，优化规则</li>
+        </ul>
+      </div>
+    </div>
+    <div class="fta-flow">
+      <span class="f">多源数据 → 语义输入</span>
+      <svg viewBox="0 0 22 12" fill="none"><path d="M1 6h18M14 1l6 5-6 5" stroke="#66728F" stroke-width="1.5"/></svg>
+      <span class="f">规则约束 → 可解释推理</span>
+      <svg viewBox="0 0 22 12" fill="none"><path d="M1 6h18M14 1l6 5-6 5" stroke="#66728F" stroke-width="1.5"/></svg>
+      <span class="f">业务目标 → 闭环执行</span>
+    </div>
+    <div class="dikw-hub">落地形态：本体把「事实-规则-行动」三段式结构注入Prompt，AI输出的不再是笼统建议，而是「风险判断—处理方案—执行动作」的结构化决策，直接驱动作业设备。</div>
+  </div>
+
+  <!-- 2 DIKW -->
+  <div class="mech">
+    <div class="mech-head"><span class="m-no">M-02</span><h3>人与AI的DIKW双循环</h3></div>
+    <div class="mech-lead">DIKW（数据-信息-知识-智慧）揭示从原始事实到决策智慧的转化路径。传统DIKW在智慧环节断层；破局之道是构建两个并行协同的循环，以本体作为联接枢纽做双向转化。</div>
+    <div class="dikw">
+      <div class="loop">
+        <h4>人的DIKW循环 · 知识图谱化</h4>
+        <div class="who">以图结构增强面向人的智能检索与挖掘</div>
+        <div class="steps"><span>数据</span><svg viewBox="0 0 13 12" fill="none"><path d="M1 6h9M7 1l5 5-5 5" stroke="#66728F" stroke-width="1.4"/></svg><span>信息</span><svg viewBox="0 0 13 12" fill="none"><path d="M1 6h9M7 1l5 5-5 5" stroke="#66728F" stroke-width="1.4"/></svg><span>知识</span><svg viewBox="0 0 13 12" fill="none"><path d="M1 6h9M7 1l5 5-5 5" stroke="#66728F" stroke-width="1.4"/></svg><span>智慧</span></div>
+        <div style="font-size:11.5px;color:var(--tx-2);margin-top:8px">业务人员通过自然语言交互获取洞察、提炼智慧，支撑价值判断与创造性决策。</div>
+      </div>
+      <div class="loop">
+        <h4>AI的DIKW循环 · 本体模型化</h4>
+        <div class="who">以本体语义形式化表达业务事实，沉淀事理逻辑</div>
+        <div class="steps"><span>事实感知</span><svg viewBox="0 0 13 12" fill="none"><path d="M1 6h9M7 1l5 5-5 5" stroke="#66728F" stroke-width="1.4"/></svg><span>规则推理</span><svg viewBox="0 0 13 12" fill="none"><path d="M1 6h9M7 1l5 5-5 5" stroke="#66728F" stroke-width="1.4"/></svg><span>跨系统执行</span></div>
+        <div style="font-size:11.5px;color:var(--tx-2);margin-top:8px">AI完成事实感知、规则推理、跨系统执行，形成自主闭环。</div>
+      </div>
+    </div>
+    <div class="dikw-hub">
+      <b>本体 = 双循环的联接枢纽（双向转化）</b><br>
+      · 人的决策意图 → AI可执行规则：专家判断「连续三代同亲本可能适应性退化」→ 本体转化为「IF 连续三代同亲本 THEN 切换育种路径」。<br>
+      · AI的执行结果 → 人可理解反馈：AI在数字孪生田模拟数千杂交组合后发现「某组合干旱下产量下降15%」→ 转译为「当前筛选的组合存在抗旱性风险，建议调整亲本选择」。<br>
+      人+AI的DIKW＝数字孪生化：人在统一语义框架下与AI共同完成对现实业务的仿真与优化，形成「人赋能AI，AI增强人」的正向循环。
+    </div>
+  </div>
+
+  <!-- 3 7+1 -->
+  <div class="mech">
+    <div class="mech-head"><span class="m-no">M-03</span><h3>「7+1」本体语义规范框架</h3></div>
+    <div class="mech-lead">围绕「事理建模」提炼的工程化框架：「7」类规范聚焦业务事理向语义的转化，每类匹配W3C技术标准（RDF/OWL/SKOS/SWRL/OWL-S/ODRL/SPARQL）；「1」即目标与评估规范，确保模型与AI目标对齐。点击卡片查看职责与书中示例。</div>
+    <div class="std-grid" id="stdGrid">
+      <button class="std" data-node="n_rdf"><div class="st-code">RDF <span class="st-n">基础描述</span></div><div class="st-name">业务资源描述语义</div><div class="st-desc">以「主语-谓语-宾语」三元组构建事实关联网络，定义业务资源，支撑AI理解。</div><div class="st-eg">4×4表格 → 16个三元组</div></button>
+      <button class="std" data-node="n_owl"><div class="st-code">OWL <span class="st-n">逻辑语义</span></div><div class="st-name">业务分层约束语义</div><div class="st-desc">类层级、属性约束、唯一性规则，让本体从零散资源集合升级为有规则的语义体系。</div><div class="st-eg">Class: 害虫 subclassOf 半翅目</div></button>
+      <button class="std" data-node="n_skos"><div class="st-code">SKOS <span class="st-n">共识地基</span></div><div class="st-name">业务术语语义</div><div class="st-desc">统一术语定义、分类及关联，消除同词不同义，让大模型理解企业行话。</div><div class="st-eg">白糖罂 == 蜂糖罂（等价）</div></button>
+      <button class="std" data-node="n_swrl"><div class="st-code">SWRL <span class="st-n">推理扩展</span></div><div class="st-name">业务控制规则语义</div><div class="st-desc">「如果…那么…」动态逻辑规则，支持多规则叠加的复杂结论推导。</div><div class="st-eg">温>25℃ ∧ 湿>80% → 霜疫霉病预警</div></button>
+      <button class="std" data-node="n_owls"><div class="st-code">OWL-S <span class="st-n">流程语义</span></div><div class="st-name">流程活动与业务操作语义</div><div class="st-desc">流程从静态步骤变动态Action，补充「前提+效果」，经BPMN 2.0与MCP落地自动化。</div><div class="st-eg">合同提交：前提=有草稿 → 效果=已提交</div></button>
+      <button class="std" data-node="n_odrl"><div class="st-code">ODRL <span class="st-n">安全闸门</span></div><div class="st-name">权限管控语义</div><div class="st-desc">明确谁有权、对哪些资产、有什么限制，全生命周期使用控制，合规不越权。</div><div class="st-eg">施药后1小时内填写记录，否则锁定</div></button>
+      <button class="std" data-node="n_sparql"><div class="st-code">SPARQL <span class="st-n">语义引擎</span></div><div class="st-name">CRUD数据操作语义</div><div class="st-desc">本体知识的增删改查接口，支撑AI完全自主地按意图取用业务本体。</div><div class="st-eg">查询当季易发病害有哪些</div></button>
+      <button class="std goal" data-node="n_goaleval"><div class="st-code">+1 <span class="st-n">目标与评估</span></div><div class="st-name">目标与评估规范</div><div class="st-desc">明确做什么、做到什么标准、依据什么做，验证AI对模型的实际复用效果，避免模型与AI脱节。</div><div class="st-eg">任务说明书 · 决策判定依据 · 输出样例</div></button>
+    </div>
+  </div>
+
+  <!-- 4 29句话 -->
+  <div class="mech">
+    <div class="mech-head"><span class="m-no">M-04</span><h3>「29句话」：把业务讲给AI听的七类语法</h3></div>
+    <div class="mech-lead">把「7+1」语义规范细化为29种标准化自然语言描述模板（分7类），相当于为AI理解业务建立了一套标准「语法」——把模糊的业务叙述精准「转译」为机器可读的本体语义单元。以下为书中荔枝病虫害防治示例。</div>
+    <div class="n29">
+      <div class="t"><div class="tn">01 · 业务对象描述</div><h5>有哪些对象、什么属性</h5><p>描述业务对象的属性与类型。</p><code>DataProperty: hasVariety(String) hasAge(Integer) hasFruitLoad(Enum)</code></div>
+      <div class="t"><div class="tn">02 · 业务分层约束</div><h5>分类与规则层级</h5><p>明确分类体系与数据属性合规范围。</p><code>Class: Pests subclassOf Hemiptera · 喷药浓度范围 [500, 1000]</code></div>
+      <div class="t"><div class="tn">03 · 业务术语一致性</div><h5>统一同义术语</h5><p>消除同词不同义、异词同义。</p><code>EquivalentClass: 白糖罂 == 蜂糖罂</code></div>
+      <div class="t"><div class="tn">04 · 业务控制规则</div><h5>触发预警与决策</h5><p>把专家经验转化为可执行规则。</p><code>SWRL: 气温连续3天>25℃ ∧ 湿度>80% → 触发霜疫霉病预防预警</code></div>
+      <div class="t"><div class="tn">05 · 流程活动与操作</div><h5>任务怎么做</h5><p>定义流程步骤与每个操作的输入输出。</p><code>Process: 防治流程 {巡园 → 识别 → 配药 → 施药}</code></div>
+      <div class="t"><div class="tn">06 · 权限管控策略</div><h5>谁有权做什么</h5><p>角色权限与操作约束。</p><code>Policy: 修改用药清单 requires Role(认证植保员) · 施药后1小时内填写农事记录</code></div>
+      <div class="t"><div class="tn">07 · 常用查询模板</div><h5>沉淀高频问题</h5><p>保存常用SPARQL查询，供Agent快速复用。</p><code>?disease rdf:type :Disease; :occursInSeason ?season</code></div>
+    </div>
+  </div>
+
+  <!-- 5 点线面 -->
+  <div class="mech">
+    <div class="mech-head"><span class="m-no">M-05</span><h3>「点线面」迭代式实施路径</h3></div>
+    <div class="mech-lead">避免「大而全」顶层设计陷阱：先以高价值小切口场景MVP验证（点），再纵轴拉通领域语义（线），进而横轴贯通跨领域（面），同时连接存量数据湖与知识图谱，完成从「数据资源」到「语义资产」的跃迁。</div>
+    <div class="plp">
+      <div class="node p1">
+        <span class="p-tag">点 · 小切口场景</span>
+        <h4>驱动构建本体模型</h4>
+        <p>高价值、小切口、快见效；MVP验证本体价值。</p>
+        <ul>
+          <li>四步法：定义→建模→交付→验证</li>
+          <li>最小数据集 + 量化阈值规则</li>
+          <li>分层架构保证扩展性</li>
+        </ul>
+      </div>
+      <div class="node p2">
+        <span class="p-tag">线 · 纵轴整合</span>
+        <h4>领域级拉通语义</h4>
+        <p>从「场景解」到「领域通」，形成领域「语义普通话」。</p>
+        <ul>
+          <li>四层架构：公共-领域-实例-动作</li>
+          <li>四步：关联→统一→对齐→标准化</li>
+          <li>术语词典 + SWRL冲突消解</li>
+        </ul>
+      </div>
+      <div class="node p3">
+        <span class="p-tag">面 · 横轴整合</span>
+        <h4>跨领域语义贯通</h4>
+        <p>从「领域通」到「企业通」，构建统一产业认知层。</p>
+        <ul>
+          <li>三步：识别→映射→桥接</li>
+          <li>联邦式集成，保留各领域自主权</li>
+          <li>顶层核心本体 + 联邦查询引擎</li>
+        </ul>
+      </div>
+      <div class="node p4">
+        <span class="p-tag">存量 · 资产连接</span>
+        <h4>激活数据湖与知识图谱</h4>
+        <p>保护历史投资，避免重复建设。</p>
+        <ul>
+          <li>数据湖1.0：能看见（IT驱动）</li>
+          <li>2.0：能做对（业务驱动）</li>
+          <li>3.0：全智能（战略驱动）</li>
+        </ul>
+      </div>
+    </div>
+    <div class="plp-arrow">
+      <svg viewBox="0 0 26 18" fill="none"><path d="M1 9h22M17 3l6 6-6 6" stroke="#66728F" stroke-width="1.6"/></svg>
+      <span class="lbl">递进</span>
+      <svg viewBox="0 0 26 18" fill="none"><path d="M1 9h22M17 3l6 6-6 6" stroke="#66728F" stroke-width="1.6"/></svg>
+      <span class="lbl">贯通</span>
+      <svg viewBox="0 0 26 18" fill="none"><path d="M1 9h22M17 3l6 6-6 6" stroke="#66728F" stroke-width="1.6"/></svg>
+      <span class="lbl">贯穿全程</span>
+    </div>
+  </div>
+
+  <!-- 6 Agent链路 -->
+  <div class="mech">
+    <div class="mech-head"><span class="m-no">M-06</span><h3>本体增强型 AI Agent：从意图到行动的完整链路</h3></div>
+    <div class="mech-lead">本体不是静态知识仓库，而是动态参与决策的「事理引擎」。四个递进环节建立「意图-本体-模型」动态协同：意图设计（模型拆分哪些意图）→ 意图与本体对齐（需要什么本体）→ 本体检索与调用（最小必要本体）→ 本体嵌入AI模型（正确加载本体）。</div>
+    <div class="agent-pipe">
+      <div class="ap"><div class="apn">01</div><h5>意图设计</h5><p>明确业务目标→拆解子意图→优化颗粒度；聚焦、独立、适配。</p></div>
+      <div class="ap"><div class="apn">02</div><h5>意图对齐</h5><p>任务语义 ↔ 本体事理逻辑匹配；直接映射→规则引导→自主推理。</p></div>
+      <div class="ap"><div class="apn">03</div><h5>本体检索</h5><p>图数据库 / 图向量库 / 记忆增强 / Skills封装，坚持最小必要本体。</p></div>
+      <div class="ap"><div class="apn">04</div><h5>本体嵌入</h5><p>Prompt嵌入首选；微调与增训谨慎使用；保持本体结构显性。</p></div>
+    </div>
+    <div class="row-3" style="margin-bottom:12px">
+      <div class="cell"><h5 style="color:#4FA3FF">增强推理 · 三层</h5><p>基于事实数据的实时感知 → 感知+事理融合推理（可解释可追溯）→ 感知/推理/目标的综合决策（时效、有效、合规）。</p></div>
+      <div class="cell"><h5 style="color:#F28CA8">行动转化 · 三型</h5><p>指令直驱型（判断即执行）· 人工介入型（人做关键判断）· 业务协同执行型（多Agent联动+反馈优化）。</p></div>
+      <div class="cell"><h5 style="color:#8A7BFF">五大组件</h5><p>动态事实关联 · 动态Action关联 · 本体服务支撑 · AI大模型智能引擎 · AI Agent运行支撑框架，形成「知识-数据-推理-行动」闭环。</p></div>
+    </div>
+    <div class="dikw-hub">决策不是终点，行动才是。三种行动转化方式围绕「决策如何转化为行动、由谁执行行动」展开：规则明确低风险走指令直驱；复杂与合规场景人工介入（分层介入：一键确认→填写理由→专家会审）；跨系统多角色场景由主Agent拆解、经本体定义的事件总线分发、子Agent联动执行。</div>
+  </div>
+
+  <!-- 7 落地策略 -->
+  <div class="mech">
+    <div class="mech-head"><span class="m-no">M-07</span><h3>企业AI落地：三步递进策略</h3></div>
+    <div class="mech-lead">前提：本体为AI服务，落地必须发挥AI的价值。遵循「快速验证、价值导向、存量复用」原则，构成从试点验证到规模化落地的完整演进路径。</div>
+    <div class="row-3">
+      <div class="cell"><h5 style="color:#4FA3FF">① 穿刺式验证 · 能不能做</h5><p>Bootcamps「特种兵」模式：业务数据专家+本体工程师+AI工程师+项目经理；单点突破、轻量本体、极简Agent、小样本试点、量化验收。示例：10条真实需求准确率80%→一周迭代90%。</p></div>
+      <div class="cell"><h5 style="color:#37C8AB">② 场景小切口 · 价值在哪</h5><p>「1+4」协同：总体组统筹 + 「眼睛」（数据感知）「手脚」（行动执行）「大脑」（Agent决策）「本体认知」（事理建模）四小队；设定端到端分钟级完成等挑战目标并复盘复制。</p></div>
+      <div class="cell"><h5 style="color:#E8B64C">③ AI转译 · 成本多高</h5><p>把存量知识资产转化为机器可读本体语义库：知识供给（高校专家/一线农技/业务部门）→ 本体建模 → AI转译与语义化连接 → 管理保障机制，沉淀可复用资产破解规模化难题。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- VIEW:GOVERNANCE -->
+<section id="view-governance" class="view">
+  <div class="sec-head" style="margin-top:34px">
+    <span class="kicker">GOVERNANCE & FUTURE</span>
+    <h2>落地治理与未来范式</h2>
+    <span class="note">第9-10章核心 · 碳硅协同治理 · 三重世界演进</span>
+  </div>
+
+  <div class="mech">
+    <div class="mech-head"><span class="m-no">G-01</span><h3>新旧世界：从规则驱动到自主进化</h3></div>
+    <div class="mech-lead">融合并非非此即彼的系统覆盖，而是一次跨越维度的「语义握手」：借助MCP与去中心化凭证，旧世界稳定业务逻辑被封装为可调用接口，新世界AI Agent以非侵入式语义指令赋予系统思考能力。</div>
+    <div class="g-dual">
+      <div class="g-world old">
+        <h4>规则驱动的旧世界</h4>
+        <table>
+          <colgroup><col style="width:34%"><col style="width:66%"></colgroup>
+          <tr><th>运行中心</th><td>以系统为中心，追求「绝对确定」，流程固化、章法可循</td></tr>
+          <tr><th>数据定位</th><td>流程运转后的「副产品」，月底汇总才体现价值，先污染后治理</td></tr>
+          <tr><th>人的角色</th><td>「规则缝补员」：核对差异、录入补丁、调度进度</td></tr>
+          <tr><th>架构特征</th><td>烟囱式集成、信息孤岛，接口强连、扩展成本高</td></tr>
+          <tr><th>核心价值</th><td>流程自动化：用机器替代重复劳动</td></tr>
+        </table>
+      </div>
+      <div class="g-world new">
+        <h4>自主进化的新世界</h4>
+        <table>
+          <colgroup><col style="width:34%"><col style="width:66%"></colgroup>
+          <tr><th>运行中心</th><td>以智能为中心，拥抱不确定性，听懂自然语言、举一反三</td></tr>
+          <tr><th>数据定位</th><td>生产资料，实时感知、自动反馈，AI Agent完成感知-决策-执行-复盘闭环</td></tr>
+          <tr><th>人的角色</th><td>监督者与调度者：定义目标与核心规则，碳硅共生</td></tr>
+          <tr><th>架构特征</th><td>协同自治架构，多Agent协同、插件化调用，能力即服务</td></tr>
+          <tr><th>核心价值</th><td>认知创造：自主思考、生成方案、优化策略，IT驱动创新</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="dikw-hub">
+      <b>MCP = 新旧世界的「通用翻译机」</b>：传统集成需硬编码接口；MCP让AI Agent以即插即用方式读取旧世界私有数据、调用成熟功能组件，遵循「嵌入而非侵入」——旧世界负责执行与存储，新世界负责理解与调度，数据持续输送到模型微调学习，优化策略反过来指导流程重塑，实现双向进化。
+    </div>
+  </div>
+
+  <div class="mech">
+    <div class="mech-head"><span class="m-no">G-02</span><h3>六类证明：碳硅协同的可信体系</h3></div>
+    <div class="mech-lead">区块链作为去中心化「公证处」与「账本」，从信任、记录、合规三个维度支撑碳基人与硅基Agent的可信协作，使跨主体协作从「人盯人」走向「算法自治」。以下内容为书中以企业合同管理场景为例的探索性论述。</div>
+    <div class="proofs">
+      <div class="proof"><div class="pf-n">PROOF 01</div><h5>身份证明</h5><p>碳硅混合身份档案链，为碳基人（工号/DID）与硅基Agent生成统一分布式数字身份，一次认证、全域通行。</p><div class="pf-eg">合同专员碳基DID + AI起草Agent硅基DID 链上自动匹配权限</div></div>
+      <div class="proof"><div class="pf-n">PROOF 02</div><h5>资产证明</h5><p>数字资产产权链，为每项数字资产生成唯一「智能产权证」，权属与权益规则写入智能合约。</p><div class="pf-eg">合同模板库哈希指纹上链形成NFT凭证，改一字则哈希即变</div></div>
+      <div class="proof"><div class="pf-n">PROOF 03</div><h5>授权证明</h5><p>权限凭证链+智能锁，可验证凭证记录触发条件，超时自动回收、越权触发冻结。</p><div class="pf-eg">访问时效≤24小时 · 仅可提取非结构化关键需求摘要</div></div>
+      <div class="proof"><div class="pf-n">PROOF 04</div><h5>合约证明</h5><p>智能合约搭建自动执行流水线，把审批规则模型化、合约化。</p><div class="pf-eg">条款匹配度≥98%自动触发法务验证 · 24小时未反馈默认通过</div></div>
+      <div class="proof"><div class="pf-n">PROOF 05</div><h5>追溯证明</h5><p>全链路操作哈希链，把碎片信息编织成不可擦除的数字监控网。</p><div class="pf-eg">每次修改生成新哈希并锚定前序哈希，输入最终哈希可反向溯源</div></div>
+      <div class="proof"><div class="pf-n">PROOF 06</div><h5>贡献证明</h5><p>贡献值计量链，量化碳基与硅基贡献，公平激励。</p><div class="pf-eg">基础分×场景系数生成凭证 · DAO投票调整权重</div></div>
+    </div>
+    <div class="dikw-hub" style="margin-top:12px">书中亦标注了业界前沿探索：0G（模型哈希+推理证明）、Fetch.ai（Agent去中心化身份+智能合约协作）、Near Protocol（账户抽象权限控制+众包AI）——均属理论性探索方向。</div>
+  </div>
+
+  <div class="mech">
+    <div class="mech-head"><span class="m-no">G-03</span><h3>三重世界：企业完整数字孪生</h3></div>
+    <div class="mech-lead">企业的业务能力系统性构建于三个相互嵌套的数字世界之中。它们并非取代现实，而是构建企业完整的数字孪生，为现实业务赋能。</div>
+    <div class="triple">
+      <div class="w w1">
+        <div class="w-n">WORLD 01 · 物理</div>
+        <h4>物理世界</h4>
+        <p>以世界模型构建现实客观规律的数学表达，动态模拟物理演化；把不确定性转化为可计算、可干预、可优化的确定性。</p>
+        <div class="w-carrier">载体：物联网 + 仿真技术 · 虚拟产线预演 · 电网数字孪生调度 · 试错成本趋近于零</div>
+      </div>
+      <div class="w w2">
+        <div class="w-n">WORLD 02 · 逻辑</div>
+        <h4>逻辑世界</h4>
+        <p>以本体模型构建业务知识的语义网络，把数十年业务决策逻辑建模为智能规则，让隐性知识显性化、个体智慧组织化。</p>
+        <div class="w-carrier">载体：本体模型 · 业务指南 → 可推理知识模型 · 「业务操作系统」</div>
+      </div>
+      <div class="w w3">
+        <div class="w-n">WORLD 03 · 智能</div>
+        <h4>智能世界</h4>
+        <p>以AI大模型与AI Agent为引擎，实现从环境感知、情境推演到自主决策与执行的闭环，边际成本随规模扩张显著降低。</p>
+        <div class="w-carrier">载体：大模型 + AI Agent · 意图理解 · 策略生成 · 资源调度</div>
+      </div>
+    </div>
+    <div class="plp-arrow">
+      <svg viewBox="0 0 26 18" fill="none"><path d="M1 9h22M17 3l6 6-6 6" stroke="#66728F" stroke-width="1.6"/></svg>
+      <span class="lbl">相互嵌套 · 数字孪生</span>
+    </div>
+    <div class="dikw-hub">
+      <b>本体模型 × 世界模型 = 统一认知底座</b>：本体是「逻辑内核与知识契约」（回答业务本质是什么、该遵循什么），世界模型是「现实引擎与因果镜像」（回答世界如何运行、行动有何结果）。示例：设备温度升至75℃ → 世界模型推演「5分钟后将超安全阈值」→ 本体模型联动「≤80℃安全红线」「原料3:1配比标准」「紧急停机优先级最高」→ 自主生成降速+应急冷却组合方案并完整写入生产日志。四层动态融合：语义锚定状态对齐 → 规则约束因果联合推理 → 知识进化世界演化共生 → 仿真预演现实执行闭环。
+    </div>
+  </div>
+
+  <div class="mech">
+    <div class="mech-head"><span class="m-no">G-04</span><h3>AI双重学习与新企业形态</h3></div>
+    <div class="mech-lead">AI的智能化程度在于学习并理解世间万物的语义。企业需建立面向物理世界与逻辑世界的双重持续学习机制，让AI「知行合一」，从「人在环中」走向「AI在企业环中」。</div>
+    <div class="row-3">
+      <div class="cell"><h5 style="color:#5BC8E8">物理世界学习</h5><p>聚焦万物语义、因果建模与物理直觉；借助世界模型摆脱对文本统计的依赖，真正掌握力、运动、能量传递等客观规律，让仿真推演具备科学严谨性。</p></div>
+      <div class="cell"><h5 style="color:#E8B64C">逻辑世界学习</h5><p>聚焦业务语义、决策认知与规则演化；AI持续吸收行业经验与组织实践，通过本体模型动态更新知识网络，驱动企业本体库随业务自主生长。</p></div>
+      <div class="cell"><h5 style="color:#37C8AB">五大提升路径</h5><p>安全协同学习 · 实践驱动进化 · 人机精准协同 · 可信知识构建 · 价值导向治理——让每一次进化与企业使命、社会责任同频共振。</p></div>
+    </div>
+    <div class="dikw-hub" style="margin-top:12px">
+      <b>新形态</b>：业务形态演进为「智能原生业务」；企业数智化新范式＝「知识建模+AI自主实现」；管理组织变革＝知识、数据、流程、IT四维融合。竞争本质已从「数据规模比拼」转向「AI认知体系的持续进化能力」。
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="f-src">
+    <span>内容来源：《本体驱动的AI数据管理》（《本体驱动的AI数据管理》编写组 · 机械工业出版社 · 2026.05 · ISBN 9787111810759）</span>
+    <span>本页所有概念定义、结构、数字均提炼自原书；标注「示意」的补充内容为编者建议，非书中原文。</span>
+  </div>
+  <div>交互式知识图谱 · 读书辅助工具 · 桌面端建议全屏浏览</div>
+</footer>
+
+<!-- GRAPH_DATA -->
+<script>
+/* ============================================================
+   图谱数据：节点与关系均提炼自原书《本体驱动的AI数据管理》
+   chap 字段 = 出处章节；desc/eg 为书中内容的精简转述
+   ============================================================ */
+const CATS = [
+  {name:"命题 · 认知底座", color:"#E8B64C"},
+  {name:"智能时代", color:"#F08A6F"},
+  {name:"治理重塑", color:"#E8615C"},
+  {name:"本体与语义", color:"#37C8AB"},
+  {name:"数据体系", color:"#4FA3FF"},
+  {name:"建模工程", color:"#8A7BFF"},
+  {name:"Agent 工程", color:"#F28CA8"},
+  {name:"应用落地", color:"#7ED98A"},
+  {name:"演进与治理", color:"#5BC8E8"}
+];
+
+const NODES = [
+/* 命题 · 认知底座 */
+{id:"n_bizonto", name:"业务本体", cat:0, chap:"第4-5章", sz:36,
+ desc:"以显式方式组织知识概念及其相互关系的形式化、结构化知识表示方法。其核心优势在于可依托公理与关系实现逻辑推理，有效弥补大模型在推理与生成过程中的固有局限；是将本体与大模型深度融合、构建可信AI的关键路径，也是企业AI数据资产管理的核心锚点。"},
+{id:"n_fta", name:"事实-事理-行动", cat:0, chap:"第3-4章", sz:34,
+ desc:"本体建模对传统建模（对象-属性-关系，回答「有什么」）的根本升级。事实回答「发生了什么」，事理回答「为什么这样做、如何行动」，行动落地具体业务操作；让AI从 KnowWhat 走向 KnowWhy / How，构建完整语义框架。"},
+{id:"n_cogbase", name:"认知底座", cat:0, chap:"序 · 第3章", sz:28,
+ desc:"能让机器理解业务的统一语义基础设施。书中判断：AI用得好不好，关键不在模型与算力，而在企业自身有没有高质量的AI数据集——真正有价值的是数据背后的原理与逻辑，是知识。"},
+{id:"n_human_machine", name:"人机通用结构化表达", cat:0, chap:"第3章", sz:26,
+ desc:"同一业务本质，对人呈现自然语言、对AI呈现形式化语言，符号载体不同但所指对象同一、业务解释一致；本体让事物本质在人与AI之间无歧义地表达、传递与执行。"},
+
+/* 智能时代 */
+{id:"n_token", name:"Token", cat:1, chap:"第1·4章", sz:20,
+ desc:"信息处理单元从比特到Token。Token是符号的物质载体，本体是符号的意义框架——Token在神经网络中流转，本质是本体意义在计算层的激活与传递。"},
+{id:"n_llm", name:"大模型", cat:1, chap:"第1章", sz:24,
+ desc:"具备强大的语言理解与生成能力，但其内部并无对领域事理逻辑的显式建模，容易忽略关键约束或违反专业规则——需要本体补齐认知短板。"},
+{id:"n_agentic", name:"Agentic AI", cat:1, chap:"第1章", sz:24,
+ desc:"智能体式AI的崛起：从「规则驱动」的IT应用到「自主进化」的智能体，AI Agent开始承担业务执行、管理、决策等多元角色。"},
+{id:"n_superpartner", name:"智能体=超级伙伴", cat:1, chap:"第1章", sz:20,
+ desc:"智能体成为业务人员的「超级伙伴」；「建模思维」成为人与智能体协同的关键能力。"},
+{id:"n_fuel", name:"数据=进化燃料", cat:1, chap:"第1章", sz:24,
+ desc:"数据从业务记录变为驱动智能体进化的「燃料」，成为连接业务与智能体的纽带——这是业务本体登上舞台的根本动因。"},
+{id:"n_4all", name:"四全载体", cat:1, chap:"第1章", sz:20,
+ desc:"数据成为业务事实与事理的完整载体，体现四个维度：全模态兼容、全流程贯通、全要素统一、全周期连续。"},
+
+/* 治理重塑 */
+{id:"n_4shift", name:"四重转变", cat:2, chap:"第2章", sz:22,
+ desc:"智能时代数据治理的四重转变：从面向业务人员到赋能AI伙伴、从功能叠加到认知融合、从汇聚事实到贯穿事理与行动、像管理数据一样管理知识。"},
+{id:"n_private", name:"企业私域资产", cat:2, chap:"第2章", sz:20,
+ desc:"赋能大模型掌握企业私域资产，破除知识壁垒、消除数据孤岛，让AI Agent遵循企业逻辑规划执行任务。"},
+{id:"n_halluc", name:"降低模型幻觉", cat:2, chap:"第2·7章", sz:22,
+ desc:"以本体承载的事理逻辑约束推理过程，提升决策可信度；增强推理让AI输出可控、可解释、可审计。"},
+{id:"n_dikw", name:"DIKW 双循环", cat:2, chap:"第3章", sz:28,
+ desc:"人的循环=知识图谱化，AI的循环=本体模型化，人+AI=数字孪生化；本体是联接两个循环的认知枢纽，实现「人赋能AI、AI增强人」的1+1＞2复合智慧。"},
+{id:"n_unified", name:"统一结构化", cat:2, chap:"第3章", sz:30,
+ desc:"智能时代数据治理的破局之道：以业务本体弥合「人类业务语义」与「机器可计算逻辑」之间的结构性断层，实现人机通用的结构化表达。"},
+{id:"n_assetmodel", name:"知识资产模型化", cat:2, chap:"第3章", sz:20,
+ desc:"把企业专有知识沉淀为可建模、可复用、可传承的结构化资产，让老专家的隐性经验从「师徒制」升级为组织能力。"},
+
+/* 本体与语义 */
+{id:"n_connsym", name:"联结主义+符号主义", cat:3, chap:"第4章", sz:26,
+ desc:"企业AI的必然选择：纯概率推理难以成为企业AI落地的有效路径，联结主义的泛化能力与符号主义的严谨推理结合，构成本体增强AI推理的核心机理。"},
+{id:"n_ontoreason", name:"本体增强AI推理", cat:3, chap:"第4·7章", sz:30,
+ desc:"让大模型在事实感知、规则推理、目标决策三层获得本体支撑，将AI推理从「自由发挥」转化为「精准可控」，使每一次推理都指向业务目标。"},
+{id:"n_w3c", name:"W3C 标准语言体系", cat:3, chap:"第4-5章", sz:22,
+ desc:"2004年W3C推出RDF、OWL等国际规范，为本体的形式化符号表达建立统一标准；AI可以成为「高级本体建模师」，辅助专家完成建模。"},
+{id:"n_7plus1", name:"「7+1」语义规范", cat:3, chap:"第5章", sz:36,
+ desc:"业务事理向AI转化的统一结构化表达框架：「7」类业务语义规范聚焦业务事理向语义的转化，匹配W3C技术标准；「1」即目标与评估规范，确保模型与AI目标对齐。"},
+{id:"n_rdf", name:"RDF", cat:3, chap:"第5.4节", sz:22,
+ desc:"基础描述语言。以「主语-谓语-宾语」三元组直接刻画业务实体、属性及关联，构建本体的「事实关联网络」。"},
+{id:"n_owl", name:"OWL", cat:3, chap:"第5.4节", sz:22,
+ desc:"逻辑语义赋予层。为三元组赋予类层级、属性约束、唯一性规则，让本体从「零散资源集合」升级为「有规则的语义体系」。"},
+{id:"n_skos", name:"SKOS", cat:3, chap:"第5.4节", sz:22,
+ desc:"共识地基。统一企业术语的定义、分类及关联，对内消除术语歧义，对外帮助大模型理解企业专属「行话」。"},
+{id:"n_swrl", name:"SWRL", cat:3, chap:"第5.4节", sz:22,
+ desc:"推理能力扩展器。以「如果…那么…」动态逻辑规则突破OWL基础校验，支持多规则叠加的复杂结论推导，形成「推理-补充-再推理」闭环。"},
+{id:"n_owls", name:"OWL-S", cat:3, chap:"第5.4节", sz:22,
+ desc:"流程自动化语义层。把流程从静态步骤变为动态Action，除输入输出外补充「前提+效果」，通过BPMN 2.0与MCP落地端到端流程自动化。"},
+{id:"n_odrl", name:"ODRL", cat:3, chap:"第5.4节", sz:22,
+ desc:"安全闸门。明确谁有权做、对哪些资产做、有什么限制，从「访问控制」升级为「全生命周期使用控制」，让AI合规不越权。"},
+{id:"n_sparql", name:"SPARQL", cat:3, chap:"第5.4节", sz:22,
+ desc:"语义网引擎。以「主谓宾缺省提问」实现本体知识的增删改查（CRUD），支撑AI完全自主地按意图取用业务本体。"},
+{id:"n_goaleval", name:"目标与评估（+1）", cat:3, chap:"第5.4节", sz:22,
+ desc:"「7+1」中的「1」：明确任务及业务效果，制定评估与质控标准，关联业务本体与事理模型——让AI明确做什么、做到什么标准、依据什么做。"},
+
+/* 数据体系 */
+{id:"n_3cat", name:"三类数据资产目录", cat:4, chap:"第5.1节", sz:28,
+ desc:"华为实践：面向作业、分析、AI的三类数据资产目录，三者依据服务对象与核心价值差异构建差异化支撑体系，构成企业资产地图。"},
+{id:"n_opcat", name:"作业侧目录", cat:4, chap:"第5.1节", sz:22,
+ desc:"以业务对象为核心，5层结构（L1主题域分组→L2主题域→L3业务对象→L4逻辑数据实体→L5属性）；截至2026年1月底：1800+业务对象、300+数据Owner。"},
+{id:"n_ancat", name:"分析侧目录", cat:4, chap:"第5.1节", sz:22,
+ desc:"支撑分析场景，5层结构（含分析主题、多维模型、指标、标签等）；截至2026年1月底：880+分析主题、230+数据Owner。"},
+{id:"n_aicat", name:"AI侧目录", cat:4, chap:"第5.1节", sz:24,
+ desc:"以大模型与AI Agent为核心服务对象，围绕AI数据集、结构化事实数据、事理模型、推理结果组织管理；L3核心锚点为「AI业务数据/本体」。"},
+{id:"n_dataset", name:"AI数据集", cat:4, chap:"第5.2节", sz:22,
+ desc:"支撑AI增强训练的数据集合，包括SFT数据集、COT数据集、RL数据集等；需筛选高质量、合规数据，并建立统一ID与版本标识支撑治理与追溯。"},
+{id:"n_facts", name:"事实数据", cat:4, chap:"第5.3节", sz:22,
+ desc:"支撑AI实时感知与精准判断：结构化数据（L4管理单元为表）、非结构化数据（RAG知识库）、关系数据（Graph RAG知识库，以三元组为基础单元）。"},
+{id:"n_thingmodel", name:"事理模型", cat:4, chap:"第5.3节", sz:26,
+ desc:"支撑大模型与AI Agent高效运作的核心结构化载体，优先基于「7+1」统一语义规范建模；每个事理模型匹配相应的AI Agent任务场景。"},
+{id:"n_result", name:"推理结果", cat:4, chap:"第5.3节", sz:22,
+ desc:"AI执行推理任务的业务痕迹与过程记录；经业务方确认并纳入业务流程后，可转化为作业侧或分析侧数据资产，AI侧应完整留存原始记录与转化关系。"},
+
+/* 建模工程 */
+{id:"n_29", name:"「29句话」范式", cat:5, chap:"第6.1节", sz:30,
+ desc:"把「7+1」语义规范细化为29种标准化自然语言描述模板（分7类），为AI理解业务建立标准「语法」；像一位翻译官，把模糊业务叙述精准转译为机器可读的本体语义单元。"},
+{id:"n_explicit", name:"显性知识萃取", cat:5, chap:"第6.1节", sz:20,
+ desc:"AI基于结构化数据（表单/数据库）、半结构化文档（接口/流程图）、非结构化资料（需求规格书/操作手册/历史案例）自动抽取标准化业务语义描述。"},
+{id:"n_tacit", name:"隐性知识萃取", cat:5, chap:"第6.1节", sz:20,
+ desc:"业务专家基于「29句话」范式，从「有哪些对象」「任务怎么做」「有哪些规则」三个维度，把专家经验、决策逻辑与上下文认知转化为标准化描述。"},
+{id:"n_dualcheck", name:"AI建模+专家审核", cat:5, chap:"第6.2节", sz:22,
+ desc:"双大模型协同完成本体模型校验与优化，可视化工具语法校验与专家内容把关，再基于业务场景构建测试用例验证本体模型。"},
+{id:"n_jiyong", name:"「建用优复」生命周期", cat:5, chap:"第6.3节", sz:22,
+ desc:"本体模型资产存入专用语义数据库，数据层+语义层双重运维，按「建用优复」全生命周期运营管理，实现可运营、可复用的本体资产。"},
+{id:"n_plp", name:"「点线面」实施路径", cat:5, chap:"第6.5节", sz:34,
+ desc:"小切口场景驱动构建（点）→ 领域纵轴整合（线）→ 跨领域横轴贯通（面）→ 连接存量数据湖与知识图谱；从「场景解」到「领域通」再到「企业通」。"},
+{id:"n_point", name:"点 · 小切口场景", cat:5, chap:"第6.5节", sz:24,
+ desc:"以「高价值、小切口、快见效」的具体业务场景为切入点，通过MVP快速验证本体价值；四步法：定义→建模→交付→验证；遵循公共层-领域层-实例层分层架构保证可扩展性。"},
+{id:"n_line", name:"线 · 纵轴整合", cat:5, chap:"第6.5节", sz:24,
+ desc:"领域级拉通各场景语义：沿「公共层→领域层→实例层→动作层」四层架构，按「关联-统一-对齐-标准化」推进，形成领域统一的「语义普通话」。"},
+{id:"n_face", name:"面 · 横轴整合", cat:5, chap:"第6.5节", sz:24,
+ desc:"跨领域语义贯通：按「识别跨域交互点→建立语义映射→构建桥接本体与联邦查询」三步推进，用联邦式集成解决概念冲突、粒度差异与规则冲突。"},
+{id:"n_legacy", name:"存量资产连接", cat:5, chap:"第6.5节", sz:22,
+ desc:"把传统数据湖与早期知识图谱有序纳入统一本体语义框架：数据湖1.0（能看见）→ 2.0（能做对）→ 3.0（全智能）三阶段渐进演进。"},
+
+/* Agent 工程 */
+{id:"n_intent", name:"AI Agent意图设计", cat:6, chap:"第7.1节", sz:22,
+ desc:"明确业务目标→拆解子意图→优化颗粒度；遵循聚焦性、独立性、适配性三原则，让每个意图可单独执行、无业务交叉。"},
+{id:"n_align", name:"意图与本体对齐", cat:6, chap:"第7.1节", sz:24,
+ desc:"把任务语义与本体编码的事理逻辑匹配，划定知识检索边界。三类范式：直接固定映射、规则引导的语义映射、本体层自主推理对齐。"},
+{id:"n_retrieve", name:"本体检索与调用", cat:6, chap:"第7.1节", sz:24,
+ desc:"坚持「最小必要本体」原则。四类机制：图数据库检索（SPARQL精查）、图向量库检索（语义相似）、记忆增强调用（长短时记忆）、AI Agent Skills封装调用（模块化技能）。"},
+{id:"n_embed", name:"本体嵌入AI模型", cat:6, chap:"第7.1节", sz:24,
+ desc:"把符号化逻辑转化为大模型可推理的业务上下文。首选Prompt嵌入（零训练、可解释），谨慎使用指令微调与数据增训；无论何种方式都保持本体结构显性。"},
+{id:"n_enhreason", name:"本体增强推理", cat:6, chap:"第7.2节", sz:30,
+ desc:"三层增强：基于事实数据的实时感知（把原始数据转化为语义输入）→ 感知+事理融合推理（结构化约束与规则引导，可解释可追溯）→ 感知/推理/目标综合决策。"},
+{id:"n_act", name:"决策到行动转化", cat:6, chap:"第7.3节", sz:24,
+ desc:"三种方式：指令直驱型（判断即执行，须规则明确、低风险、后果可控）、人工介入型（人做关键判断、守合规底线）、业务协同执行型（多Agent联动、反馈优化）。"},
+{id:"n_5comp", name:"五大组件", cat:6, chap:"第7.4节", sz:22,
+ desc:"本体增强型AI Agent构建五组件：动态事实关联机制、动态Action关联机制、本体服务支撑能力、AI大模型智能引擎、AI Agent运行支撑框架，形成「知识-数据-推理-行动」闭环。"},
+
+/* 应用落地 */
+{id:"n_6mode", name:"六大应用模式", cat:7, chap:"第8.2节", sz:30,
+ desc:"本体与AI协同的六大核心模式：智能流程自动化、数据规则驱动的自主运营、多维度一体化智能决策、跨领域动态智能协同、基于知识解析的自主推理、多场景综合统筹的PDCA闭环。"},
+{id:"n_scene", name:"场景选择原则", cat:7, chap:"第8.1节", sz:22,
+ desc:"瞄准业务痛点、聚焦投入产出；优选语义复杂、规则明确、高合规的业务场景。本体激活AI三大核心价值：拉齐个体能力差异、动态决策和行动、无限智能资源供给。"},
+{id:"n_pierce", name:"穿刺式验证", cat:7, chap:"第8.3节", sz:24,
+ desc:"以最小成本回答「能不能做」。Bootcamps「特种兵」模式：业务数据专家+本体工程师+AI工程师+项目经理；单点突破、轻量本体、极简Agent、小样本试点、量化验收。"},
+{id:"n_smallcut", name:"小切口策略", cat:7, chap:"第8.3节", sz:24,
+ desc:"回答「价值在哪」。以最小化场景切入驱动AI价值深度落地，依赖「1+4」协同模式的组织保障，从单点验证走向价值落地。"},
+{id:"n_translate", name:"AI转译", cat:7, chap:"第8.3节", sz:24,
+ desc:"破解「成本多高」。把存量知识资产转化为机器可读、可关联的本体语义库：知识供给（高校专家/一线农技/业务部门）→ 本体建模 → AI转译与语义化连接 → 管理保障机制。"},
+{id:"n_14org", name:"「1+4」协同组织", cat:7, chap:"第8.3节", sz:22,
+ desc:"总体组（节奏/价值/资源统筹）+ 四支小队：「眼睛」小队数据连接与感知、「手脚」小队行动执行与协同、「大脑」小队Agent框架与决策、「本体认知」小队事理建模与知识注入。"},
+
+/* 演进与治理 */
+{id:"n_oldworld", name:"规则驱动的旧世界", cat:8, chap:"第9.1节", sz:24,
+ desc:"以系统为中心追求「绝对确定」，数据是流程运转后的副产品，人是「规则缝补员」，烟囱式集成；核心价值仅限于流程自动化。"},
+{id:"n_newworld", name:"自主进化的新世界", cat:8, chap:"第9.1节", sz:24,
+ desc:"以智能为中心拥抱不确定性，数据是生产资料，人机协同共生，协同自治架构；核心价值从自动执行跨越到认知创造。"},
+{id:"n_mcp", name:"MCP 语义握手", cat:8, chap:"第9.1节", sz:24,
+ desc:"Model Context Protocol：新旧世界的「通用翻译机」。让AI Agent以即插即用方式读取旧世界私有数据、调用成熟功能组件，遵循「嵌入而非侵入」的赋能逻辑。"},
+{id:"n_chain", name:"区块链公证处与账本", cat:8, chap:"第9.1节", sz:26,
+ desc:"去中心化「公证处」与「账本」：从「人为信任」到「机器信任」，全局账本透明可追溯、防篡改抗抵赖，智能合约实现事前约束、事中监控、事后存证的契约自治。"},
+{id:"n_6proof", name:"六类证明", cat:8, chap:"第9.2节", sz:30,
+ desc:"碳硅协作可信体系：身份证明（碳硅混合身份档案链DID）、资产证明（数字资产产权链）、授权证明（权限凭证链+智能锁）、合约证明（智能合约流水线）、追溯证明（全链路操作哈希链）、贡献证明（贡献值计量链）。"},
+{id:"n_3world", name:"三重世界", cat:8, chap:"第10.1节", sz:34,
+ desc:"物理世界（世界模型：客观规律的数学表达）、逻辑世界（本体模型：业务知识语义网络）、智能世界（大模型+Agent：感知-推演-决策-执行闭环）；三者相互嵌套构建企业完整数字孪生。"},
+{id:"n_worldmodel", name:"世界模型", cat:8, chap:"第10.1节", sz:26,
+ desc:"企业的「现实引擎与因果镜像」：建模物理规律、环境态势、动态演化与因果链条；与本体模型（逻辑内核与知识契约）协同构成统一认知底座。"},
+{id:"n_duallearn", name:"AI双重学习", cat:8, chap:"第10.1节", sz:24,
+ desc:"物理世界学习（万物语义/因果建模/物理直觉）+ 逻辑世界学习（业务语义/决策认知/规则演化），让AI「知行合一」，从「人在环中」走向「AI在企业环中」。"}
+];
+
+const LINKS = [
+/* 命题 */
+["n_fuel","n_bizonto","倒逼"],["n_4all","n_bizonto","提出要求"],
+["n_bizonto","n_cogbase","本质定位"],["n_bizonto","n_fta","核心表达"],
+["n_bizonto","n_human_machine","支撑"],["n_cogbase","n_unified","落地为"],
+["n_human_machine","n_dikw","承载双循环"],
+/* 智能时代 */
+["n_token","n_llm","输入载体"],["n_llm","n_agentic","演进"],
+["n_agentic","n_superpartner","催生"],["n_agentic","n_fuel","驱动需求"],
+["n_llm","n_halluc","存在短板"],["n_fuel","n_4all","升维"],
+/* 治理 */
+["n_superpartner","n_4shift","推动"],["n_4shift","n_unified","指向"],
+["n_private","n_unified","需求"],["n_halluc","n_unified","倒逼"],
+["n_unified","n_bizonto","核心是"],["n_unified","n_human_machine","目标"],
+["n_dikw","n_bizonto","联接枢纽"],["n_assetmodel","n_unified","构成"],
+/* 本体语义 */
+["n_bizonto","n_connsym","必然选择"],["n_connsym","n_ontoreason","机理"],
+["n_w3c","n_7plus1","标准基础"],
+["n_7plus1","n_rdf","组成"],["n_7plus1","n_owl","组成"],["n_7plus1","n_skos","组成"],
+["n_7plus1","n_swrl","组成"],["n_7plus1","n_owls","组成"],["n_7plus1","n_odrl","组成"],
+["n_7plus1","n_sparql","组成"],["n_7plus1","n_goaleval","包含"],
+["n_ontoreason","n_enhreason","支撑"],["n_ontoreason","n_align","支撑"],
+["n_fta","n_7plus1","语义落点"],
+/* 数据 */
+["n_3cat","n_opcat","组成"],["n_3cat","n_ancat","组成"],["n_3cat","n_aicat","组成"],
+["n_aicat","n_dataset","训练资产"],["n_aicat","n_facts","推理资产"],
+["n_aicat","n_thingmodel","推理资产"],["n_aicat","n_result","推理资产"],
+["n_dataset","n_llm","增强训练"],["n_facts","n_enhreason","感知输入"],
+["n_thingmodel","n_7plus1","建模依据"],["n_thingmodel","n_ontoreason","推理依据"],
+["n_result","n_act","痕迹记录"],["n_7plus1","n_29","细化为"],
+/* 建模 */
+["n_29","n_explicit","输出形式"],["n_29","n_tacit","引导范式"],
+["n_explicit","n_dualcheck","输入"],["n_tacit","n_dualcheck","输入"],
+["n_dualcheck","n_jiyong","入库"],["n_jiyong","n_thingmodel","运营"],
+["n_plp","n_point","阶段一"],["n_plp","n_line","阶段二"],
+["n_plp","n_face","阶段三"],["n_plp","n_legacy","贯穿"],
+["n_point","n_smallcut","同源方法"],["n_legacy","n_translate","承接"],
+/* Agent */
+["n_intent","n_align","第一步"],["n_align","n_retrieve","第二步"],
+["n_retrieve","n_embed","第三步"],["n_embed","n_llm","注入"],
+["n_retrieve","n_thingmodel","调用"],["n_embed","n_enhreason","前提"],
+["n_enhreason","n_act","衔接"],["n_5comp","n_enhreason","支撑"],
+["n_5comp","n_act","支撑"],["n_enhreason","n_halluc","缓解"],
+["n_ontoreason","n_6mode","赋能"],
+/* 应用 */
+["n_6mode","n_scene","受约束"],["n_scene","n_smallcut","指导"],
+["n_pierce","n_smallcut","递进"],["n_smallcut","n_translate","递进"],
+["n_14org","n_smallcut","组织保障"],["n_act","n_6mode","落地于"],
+/* 演进治理 */
+["n_oldworld","n_newworld","演进"],["n_newworld","n_mcp","桥梁"],
+["n_mcp","n_chain","信任需求"],["n_chain","n_6proof","展开为"],
+["n_newworld","n_3world","框架"],["n_3world","n_worldmodel","组成·物理"],
+["n_3world","n_bizonto","组成·逻辑"],["n_3world","n_llm","组成·智能"],
+["n_worldmodel","n_duallearn","学习目标"],["n_bizonto","n_duallearn","学习目标"],
+["n_6proof","n_act","可信治理"],["n_chain","n_ontoreason","存证支撑"]
+];
+
+/* 空态快捷入口 */
+const QUICK_IDS = ["n_bizonto","n_fta","n_7plus1","n_29","n_plp","n_enhreason","n_6proof","n_3world"];
+const NODE_MAP = Object.fromEntries(NODES.map(n=>[n.id,n]));
+
+/* ============ 图谱渲染与交互 ============ */
+let graphChart = null;
+
+function initGraph(){
+  const el = document.getElementById("graphChart");
+  if(!el) return;
+  graphChart = echarts.init(el, null, {renderer:"canvas"});
+  const catData = CATS.map((c,i)=>({name:c.name, itemStyle:{color:c.color}}));
+  const seriesData = NODES.map(n=>({
+    id:n.id, name:n.name, value:n.name, category:n.cat,
+    symbolSize:n.sz || 20,
+    itemStyle:{color:CATS[n.cat].color},
+    label:{show:true}
+  }));
+  const seriesLinks = LINKS.map(l=>({source:l[0], target:l[1], rel:l[2], value:l[2]}));
+  const option = {
+    backgroundColor:"transparent",
+    tooltip:{
+      trigger:"item", confine:true,
+      backgroundColor:"rgba(14,22,40,.95)", borderColor:"rgba(148,163,206,.25)",
+      textStyle:{color:"#EAF0FB", fontSize:12},
+      formatter(p){
+        if(p.dataType==="edge") return p.data.rel;
+        const n = NODE_MAP[p.data.id];
+        return `<b>${p.name}</b><br><span style="color:#9AA7C4">${n?n.chap:""} · ${CATS[p.data.category].name}</span>`;
+      }
+    },
+    legend:{show:false},
+    series:[{
+      type:"graph", layout:"force", roam:true, draggable:true,
+      categories:catData,
+      data:seriesData,
+      links:seriesLinks,
+      force:{repulsion:330, edgeLength:[55,140], gravity:0.08, friction:0.55},
+      label:{show:true, position:"right", fontSize:11, color:"#C6D2E8", distance:4},
+      labelLayout:{hideOverlap:true},
+      lineStyle:{color:"#3A4768", width:1.1, curveness:0.06, opacity:.85},
+      emphasis:{
+        focus:"adjacency",
+        lineStyle:{width:2.2, color:"#6E9BFF"},
+        label:{fontSize:13, fontWeight:700, color:"#FFFFFF"},
+        edgeLabel:{show:true, fontSize:10, color:"#37C8AB", backgroundColor:"rgba(10,15,28,.85)", padding:[3,7], borderRadius:5}
+      },
+      edgeSymbol:["none","arrow"], edgeSymbolSize:7,
+      itemStyle:{borderColor:"#0A0F1C", borderWidth:1.6, shadowBlur:10, shadowColor:"rgba(0,0,0,.35)"}
+    }]
+  };
+  graphChart.setOption(option);
+  graphChart.on("click", function(p){
+    if(p.dataType==="edge") return;
+    showNodeDetail(p.data.id);
+  });
+  window.addEventListener("resize", ()=>graphChart&&graphChart.resize());
+  buildQuickNodes();
+  buildLegend();
+}
+
+/* 图例（可切换主题显隐） */
+function buildLegend(){
+  const wrap = document.createElement("div");
+  wrap.className = "map-legend";
+  const state = CATS.map(()=>true);
+  CATS.forEach((c,i)=>{
+    const b = document.createElement("button");
+    b.innerHTML = `<i style="background:${c.color}"></i>${c.name}`;
+    b.addEventListener("click", ()=>{
+      state[i] = !state[i];
+      b.classList.toggle("off", !state[i]);
+      graphChart.setOption({
+        series:[{data: NODES.map(n=>({id:n.id, name:n.name, value:n.name, category:n.cat,
+          symbolSize:n.sz||20, itemStyle:{color:CATS[n.cat].color},
+          label:{show:state[n.cat]}}))}]
+      });
+    });
+    wrap.appendChild(b);
+  });
+  const canvas = document.querySelector(".map-canvas");
+  canvas.appendChild(wrap);
+}
+
+function buildQuickNodes(){
+  const box = document.getElementById("quickNodes");
+  if(!box) return;
+  QUICK_IDS.forEach(id=>{
+    const n = NODE_MAP[id];
+    const s = document.createElement("span");
+    s.textContent = n.name;
+    s.addEventListener("click", ()=>showNodeDetail(id));
+    box.appendChild(s);
+  });
+}
+
+/* 详情面板 */
+function showNodeDetail(id){
+  const n = NODE_MAP[id];
+  if(!n || !graphChart) return;
+  graphChart.dispatchAction({type:"focusNodeAdjacency", seriesIndex:0, dataIndex:NODES.findIndex(x=>x.id===id)});
+  const panel = document.getElementById("mapDetail");
+  const rels = LINKS.filter(l=>l[0]===id || l[1]===id);
+  const relHtml = rels.map(l=>{
+    const other = l[0]===id ? l[1] : l[0];
+    const dir = l[0]===id ? "→" : "←";
+    return `<div class="r"><span class="rel">${l[2]}</span><button data-id="${other}">${dir} ${NODE_MAP[other].name}</button></div>`;
+  }).join("");
+  const egHtml = n.eg ? `<div class="md-chap" style="color:#8A7BFF;margin-top:10px">书中示例</div><pre style="font-family:var(--font-mono);font-size:11px;color:var(--tx-2);background:rgba(10,15,28,.55);border:1px solid var(--line);border-radius:8px;padding:9px 11px;line-height:1.6;white-space:pre-wrap;overflow-wrap:break-word">${n.eg}</pre>` : "";
+  panel.innerHTML = `
+    <div class="md-tag">${CATS[n.cat].name.toUpperCase()}</div>
+    <div class="md-title">${n.name}</div>
+    <div class="md-chap">出处：${n.chap}</div>
+    <div class="md-desc">${n.desc}</div>
+    ${egHtml}
+    <div class="md-rels"><h5>关联概念</h5>${relHtml || "<div style='color:var(--tx-3);font-size:12px'>暂无关联</div>"}</div>
+    <div class="md-foot">点击关联概念可继续下钻 · 内容提炼自原书${n.chap}</div>`;
+  panel.querySelectorAll(".md-rels button").forEach(btn=>{
+    btn.addEventListener("click", ()=>showNodeDetail(btn.dataset.id));
+  });
+  panel.scrollTop = 0;
+}
+</script>
+<!-- SCRIPTS -->
+<script>
+/* ============ 视图路由 ============ */
+const VIEWS = ["overview","map","chapters","mechanisms","governance"];
+let currentView = "overview";
+
+function goView(name, opt){
+  if(!VIEWS.includes(name)) name = "overview";
+  currentView = name;
+  VIEWS.forEach(v=>{
+    document.getElementById("view-"+v).classList.toggle("on", v===name);
+  });
+  document.querySelectorAll("#topNav a").forEach(a=>{
+    a.classList.toggle("on", a.dataset.view===name);
+  });
+  if(name==="map" && graphChart) setTimeout(()=>graphChart.resize(), 60);
+  if(name==="chapters" && opt && opt.chap){
+    setTimeout(()=>{
+      const c = document.querySelector('.chap[data-chap="'+opt.chap+'"]');
+      if(c && !c.classList.contains("open")) c.classList.add("open");
+      c && c.scrollIntoView({behavior:"smooth", block:"start"});
+    }, 80);
+  } else {
+    window.scrollTo({top:0, behavior:"smooth"});
+  }
+}
+
+function parseHash(){
+  const h = location.hash.replace(/^#\/?/, "");
+  const [v, chap] = h.split("/");
+  goView(v || "overview", chap ? {chap:Number(chap)} : null);
+}
+window.addEventListener("hashchange", parseHash);
+
+/* ============ 全局委托：data-goto 跳转 ============ */
+document.addEventListener("click", function(e){
+  const t = e.target.closest("[data-goto]");
+  if(!t) return;
+  const [v, chap] = t.dataset.goto.split(",");
+  if(chap){
+    location.hash = "#/"+v+"/"+chap;
+  } else {
+    location.hash = "#/"+v;
+  }
+});
+
+/* ============ 章节卡片展开/收起 ============ */
+document.querySelectorAll(".chap-head").forEach(head=>{
+  head.addEventListener("click", ()=>{
+    head.parentElement.classList.toggle("open");
+  });
+});
+
+/* ============ 机制页标准卡片 → 图谱详情 ============ */
+document.querySelectorAll(".std[data-node]").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    location.hash = "#/map";
+    setTimeout(()=>showNodeDetail(btn.dataset.node), 120);
+  });
+});
+
+/* ============ 搜索 ============ */
+const searchInput = document.getElementById("searchInput");
+function doSearch(){
+  const q = searchInput.value.trim();
+  if(!q) return;
+  const hit = NODES.find(n=>n.name.toLowerCase().includes(q.toLowerCase())
+    || n.chap.includes(q) || n.desc.includes(q));
+  if(hit){
+    location.hash = "#/map";
+    setTimeout(()=>showNodeDetail(hit.id), 120);
+    toast("已定位到「"+hit.name+"」");
+  } else {
+    toast("未找到与「"+q+"」相关的概念，试试：7+1、29句话、DIKW、点线面");
+  }
+}
+searchInput.addEventListener("keydown", e=>{ if(e.key==="Enter") doSearch(); });
+document.getElementById("searchBox").addEventListener("click", ()=>{
+  document.getElementById("searchBox").classList.add("open");
+  searchInput.focus();
+});
+searchInput.addEventListener("blur", ()=>{
+  if(!searchInput.value) document.getElementById("searchBox").classList.remove("open");
+});
+
+/* ============ Toast ============ */
+let toastTimer = null;
+function toast(msg){
+  let el = document.getElementById("toast");
+  if(!el){
+    el = document.createElement("div");
+    el.id = "toast";
+    el.style.cssText = "position:fixed;left:50%;bottom:30px;transform:translateX(-50%);z-index:99;background:rgba(14,22,40,.96);border:1px solid rgba(55,200,171,.5);color:var(--tx-1);font-size:13px;padding:10px 18px;border-radius:10px;box-shadow:var(--shadow);max-width:86vw;text-align:center";
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.opacity = "1";
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ el.style.opacity = "0"; el.style.transition = "opacity .3s"; }, 2600);
+}
+
+/* ============ 初始化 ============ */
+window.addEventListener("load", ()=>{
+  if(typeof echarts === "undefined"){
+    const box = document.getElementById("graphChart");
+    if(box) box.innerHTML = "<div style='padding:60px 20px;text-align:center;color:var(--tx-3);font-size:13px'>图表库加载失败，请检查网络后刷新（图谱依赖 jsDelivr 的 ECharts CDN）</div>";
+  } else {
+    initGraph();
+  }
+  parseHash();
+});
+</script>
+
+</body>
+</html>
