@@ -1,0 +1,1338 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI-Native SDLC 团队落地手册 · 开放平台事业部</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230f766e'/><text x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-family='monospace' font-weight='bold'>A</text></svg>">
+<style>
+:root{
+  --bg:#f7f7f5;--surface:#fff;--text:#1a1a1a;--text-2:#555;--text-3:#888;
+  --border:#e5e5e0;--accent:#0f766e;--accent-soft:#ccfbf1;
+  --warn:#b45309;--warn-soft:#fef3c7;--danger:#b91c1c;--danger-soft:#fee2e2;
+  --info:#1d4ed8;--info-soft:#dbeafe;
+  --code-bg:#1e293b;--code-text:#e2e8f0;--max:1180px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.7;font-size:15px;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+
+#progress{position:fixed;top:0;left:0;height:3px;background:var(--accent);width:0;z-index:1000}
+header{position:fixed;top:0;left:0;right:0;height:60px;background:rgba(247,247,245,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);z-index:900}
+.nav-inner{max-width:var(--max);margin:0 auto;height:100%;padding:0 24px;display:flex;align-items:center;justify-content:space-between}
+.brand{font-weight:700;font-size:15px}.brand .dot{display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--accent);margin-right:8px;vertical-align:middle}
+.nav-links{display:flex;gap:18px;font-size:13px}.nav-links a{color:var(--text-2)}.nav-links a:hover{color:var(--text);text-decoration:none}
+@media(max-width:980px){.nav-links{display:none}}
+
+.wrap{max-width:var(--max);margin:0 auto;padding:80px 24px 60px;display:grid;grid-template-columns:220px 1fr;gap:48px}
+@media(max-width:980px){.wrap{grid-template-columns:1fr;padding:80px 20px 40px}}
+
+.toc{position:sticky;top:80px;align-self:start;font-size:13px;max-height:calc(100vh - 100px);overflow:auto}
+.toc h4{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:10px;font-weight:600}
+.toc ol{list-style:none;counter-reset:toc}.toc li{counter-increment:toc;margin:5px 0}
+.toc li a{color:var(--text-2);display:block;padding:4px 8px;border-left:2px solid var(--border);transition:all .15s}
+.toc li a:hover,.toc li a.active{color:var(--accent);border-left-color:var(--accent);text-decoration:none;background:var(--accent-soft)}
+.toc li a::before{content:counter(toc,decimal-leading-zero) "  ";color:var(--text-3);font-family:monospace;font-size:11px}
+@media(max-width:980px){.toc{display:none}}
+
+main{min-width:0}
+
+.hero{padding:40px 0 36px;border-bottom:1px solid var(--border);margin-bottom:40px}
+.hero .eyebrow{font-family:monospace;font-size:12px;color:var(--accent);margin-bottom:16px;letter-spacing:.05em}
+.hero h1{font-size:38px;line-height:1.15;letter-spacing:-.02em;font-weight:800;margin-bottom:18px}
+.hero h1 .accent{color:var(--accent)}
+.hero .lead{font-size:16px;color:var(--text-2);max-width:680px;line-height:1.7}
+.hero .meta{margin-top:24px;display:flex;gap:20px;flex-wrap:wrap;font-size:13px;color:var(--text-3)}
+.team-banner{background:var(--info-soft);border:1px solid #bfdbfe;border-radius:8px;padding:14px 18px;margin-top:24px;font-size:13px;line-height:1.7;color:#1e3a5f}
+.team-banner b{color:#1e40af}
+@media(max-width:780px){.hero h1{font-size:28px}}
+
+section{margin-bottom:56px;scroll-margin-top:80px}
+h2{font-size:24px;font-weight:700;letter-spacing:-.01em;margin-bottom:8px;display:flex;align-items:baseline;gap:12px}
+h2 .num{font-family:monospace;font-size:13px;color:var(--accent);font-weight:600}
+.section-lead{color:var(--text-2);font-size:15px;margin-bottom:20px;max-width:680px}
+h3{font-size:16px;font-weight:600;margin:24px 0 10px}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}
+@media(max-width:780px){.grid-2,.grid-3{grid-template-columns:1fr}}
+
+.principle{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px}
+.principle .p-num{font-family:monospace;font-size:11px;color:var(--accent);font-weight:700;margin-bottom:4px}
+.principle .p-title{font-weight:600;font-size:14px;margin-bottom:4px}
+.principle .p-desc{font-size:13px;color:var(--text-2);line-height:1.6}
+
+.stage-block{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;margin:16px 0}
+.stage-block .stage-head{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.stage-block .stage-num{width:34px;height:34px;border-radius:8px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
+.stage-block .stage-title{font-size:18px;font-weight:700}
+.stage-block .stage-sub{font-size:12.5px;color:var(--text-3)}
+
+ul.checklist,ol.steps{padding-left:0;list-style:none;margin:10px 0}
+ul.checklist li,ol.steps li{padding:5px 0 5px 26px;position:relative;font-size:14px;line-height:1.65}
+ul.checklist li::before{content:"";position:absolute;left:4px;top:12px;width:13px;height:7px;border-left:2px solid var(--accent);border-bottom:2px solid var(--accent);transform:rotate(-45deg)}
+ol.steps{counter-reset:step}ol.steps li{counter-increment:step}
+ol.steps li::before{content:counter(step);position:absolute;left:0;top:6px;width:20px;height:20px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:monospace}
+
+.antipattern{background:var(--danger-soft);border-left:3px solid var(--danger);padding:12px 14px;border-radius:0 6px 6px 0;margin:12px 0;font-size:13.5px}
+.antipattern .label{font-size:11px;font-weight:700;color:var(--danger);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.antipattern ul{padding-left:18px;color:#7f1d1d}.antipattern li{margin:3px 0}
+.tip{background:var(--accent-soft);border-left:3px solid var(--accent);padding:12px 14px;border-radius:0 6px 6px 0;margin:12px 0;font-size:13.5px;color:#134e4a}
+.warn-box{background:var(--warn-soft);border-left:3px solid var(--warn);padding:12px 14px;border-radius:0 6px 6px 0;margin:12px 0;font-size:13.5px;color:#78350f}
+
+pre{background:var(--code-bg);color:var(--code-text);padding:16px 18px;border-radius:8px;overflow-x:auto;font-size:12.5px;line-height:1.6;margin:12px 0}
+pre .cmt{color:#64748b}pre .key{color:#7dd3fc}pre .str{color:#bef264}
+
+.table-wrap{overflow-x:auto;margin:14px 0;border:1px solid var(--border);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--surface);table-layout:fixed}
+th{background:#f5f5f2;text-align:left;padding:10px 12px;font-weight:600;border-bottom:1px solid var(--border)}
+td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.55}
+tr:last-child td{border-bottom:none}
+
+details{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin:10px 0;overflow:hidden}
+details summary{cursor:pointer;padding:12px 16px;font-weight:600;font-size:14px;list-style:none;display:flex;align-items:center;gap:8px;user-select:none}
+details summary::before{content:"+";display:inline-flex;width:20px;height:20px;border-radius:4px;background:var(--accent-soft);color:var(--accent);align-items:center;justify-content:center;font-weight:700;font-family:monospace;flex-shrink:0}
+details[open] summary::before{content:"−"}
+details summary:hover{background:#fafaf7}
+details .detail-body{padding:14px 18px;border-top:1px solid var(--border);font-size:13.5px;line-height:1.7}
+
+.flow{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin:16px 0;overflow-x:auto}
+.flow svg{display:block;margin:0 auto;max-width:100%;height:auto}
+
+.timeline{margin:20px 0}
+.tl-row{display:grid;grid-template-columns:70px 24px 1fr;align-items:start}
+.tl-time{font-family:monospace;font-size:12px;color:var(--text-3);padding-top:16px;text-align:right;padding-right:10px}
+.tl-axis{display:flex;justify-content:center;position:relative}
+.tl-dot{width:12px;height:12px;border-radius:50%;background:var(--accent);border:3px solid var(--bg);z-index:2;margin-top:16px;flex-shrink:0}
+.tl-line{position:absolute;left:50%;top:28px;bottom:-12px;width:2px;background:var(--border);transform:translateX(-50%)}
+.tl-row:last-child .tl-line{display:none}
+.tl-content{padding:12px 0 20px 14px}
+.tl-title{font-weight:600;font-size:14.5px;margin-bottom:3px}
+.tl-desc{font-size:13px;color:var(--text-2)}
+.tl-tag{display:inline-block;font-family:monospace;font-size:11px;background:var(--accent-soft);color:var(--accent);padding:2px 8px;border-radius:4px;margin-top:5px;margin-right:5px}
+
+footer{border-top:1px solid var(--border);padding:28px 0;margin-top:40px;color:var(--text-3);font-size:12px;line-height:1.8}
+
+@media(max-width:780px){
+  body{font-size:15px}h2{font-size:20px}.stage-block{padding:18px}
+  .stage-block li,.stage-block p,.tip,.antipattern,.detail-body{font-size:14px}
+  table{font-size:14px}td,th{padding:10px}
+  .hero h1{font-size:26px}.hero .lead{font-size:15px}
+  pre{font-size:12px;padding:12px}
+}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<header>
+  <div class="nav-inner">
+    <div class="brand"><span class="dot"></span>AI-Native SDLC Playbook</div>
+    <nav class="nav-links">
+      <a href="#principles">原则</a>
+      <a href="#gitflow">分支环境</a>
+      <a href="#stages">六阶段</a>
+      <a href="#sop">上线 SOP</a>
+      <a href="#roadmap">路线</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+<aside class="toc">
+  <h4>本手册目录</h4>
+  <ol>
+    <li><a href="#principles">六条原则</a></li>
+    <li><a href="#collab">团队协作模式</a></li>
+    <li><a href="#gitflow">Git Flow 分支环境映射</a></li>
+    <li><a href="#stage-plan">Plan 意图捕获</a></li>
+    <li><a href="#stage-design">Design 需求设计</a></li>
+    <li><a href="#stage-build">Build Agentic 编码</a></li>
+    <li><a href="#stage-test">Test 反馈环</a></li>
+    <li><a href="#stage-deploy">Deploy 门禁发布</a></li>
+    <li><a href="#stage-maintain">Maintain 闭环运维</a></li>
+    <li><a href="#gates">硬门禁清单</a></li>
+    <li><a href="#sop">一次需求上线 SOP</a></li>
+    <li><a href="#roadmap">落地路线图</a></li>
+    <li><a href="#signals">Review 高危信号</a></li>
+  </ol>
+</aside>
+
+<main>
+
+<div class="hero">
+  <div class="eyebrow">ENGINEERING PLAYBOOK · v2.0 · 开放平台事业部</div>
+  <h1>AI 时代的开发流程，<br/><span class="accent">从需求到上线</span> 全周期指南</h1>
+  <p class="lead">
+    这份手册给团队所有工程师：我们如何用 AI Agent（终端编码助手）做需求、设计、编码、测试和发布。
+    重点解决新人最容易懵的分支环境映射、merge/rebase、上线顺序问题。
+  </p>
+</div>
+
+<!-- ===== 六条原则 ===== -->
+<section id="principles">
+  <h2><span class="num">01</span>六条基本原则</h2>
+  <p class="section-lead">不管在哪个阶段，这六条是判断"这样做对不对"的默认标尺。</p>
+  <div class="grid-3">
+    <div class="principle"><div class="p-num">01</div><div class="p-title">规格先行</div><div class="p-desc">先写清楚意图和验收标准，再让 AI Agent 写代码。一句话 prompt 直接开工必然返工。</div></div>
+    <div class="principle"><div class="p-num">02</div><div class="p-title">人在环中</div><div class="p-desc">交易链路的代码必须人审。低风险工具类改动可以快，涉及订单/资金/支付的必须资深 review。</div></div>
+    <div class="principle"><div class="p-num">03</div><div class="p-title">小批量增量</div><div class="p-desc">Agent 一次只做一个可验证的小改动。不要让它一口气写 500 行再 review。</div></div>
+    <div class="principle"><div class="p-num">04</div><div class="p-title">硬门禁不绕过</div><div class="p-desc">Lint 和单测红灯就是不能合并。不要因为"赶上线"就 skip 门禁。</div></div>
+    <div class="principle"><div class="p-num">05</div><div class="p-title">可回滚</div><div class="p-desc">交易链路的每一次发布都必须能快速回退。数据库变更必须配套回滚脚本。</div></div>
+    <div class="principle"><div class="p-num">06</div><div class="p-title">留痕</div><div class="p-desc">plan.md、PR 讨论、override 记录都要留。出问题能回溯，做对了能复用。</div></div>
+  </div>
+</section>
+
+<!-- ===== 团队协作模式 ===== -->
+<section id="collab">
+  <h2><span class="num">02</span>团队协作模式：高内聚，低耦合</h2>
+  <p class="section-lead">AI 时代的协作不是"人 + AI 一起在一个文档里改"，而是每个人/每个 Agent 独立负责一块，只交换结果，不纠缠过程。</p>
+
+  <div class="grid-2">
+    <div class="principle">
+      <div class="p-num">核心原则</div>
+      <div class="p-title">高内聚、低耦合</div>
+      <div class="p-desc">每个人独立负责一个模块，输入输出定义清楚，干完直接交付结果，不需要拉会汇报过程。</div>
+    </div>
+    <div class="principle">
+      <div class="p-num">沟通方式</div>
+      <div class="p-title">异步文档优先</div>
+      <div class="p-desc">减少同步会议。需要对接时直接甩结果和接口定义，不展开讨论"怎么做"的细枝末节。</div>
+    </div>
+  </div>
+
+  <h3>基本单元：DRI（微型 CEO）+ Agent 集群</h3>
+  <p style="font-size:14px;color:var(--text-2);margin-bottom:12px;">每个需求/模块有一个 <b>DRI（Directly Responsible Individual）</b> 对结果端到端负责，周围配一组可调度的 AI Agent 集群。DRI 做判断和担责，Agent 做执行和交付。</p>
+  <div class="tip" style="margin:8px 0 12px;">
+    <b>DRI 担什么责：</b>流程责任——有没有按流程走、有没有及时升级问题、有没有 review 到位。<b>不是资金责任</b>——交易链路出问题，最终兜底还是资深工程师/架构师。DRI 是流程 owner，不是背锅侠。
+  </div>
+
+  <svg viewBox="0 0 700 340" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:12px auto;max-width:100%;">
+    <!-- DRI 框 -->
+    <rect x="220" y="10" width="260" height="70" rx="8" fill="#7f1d1d"/>
+    <text x="350" y="35" text-anchor="middle" fill="white" font-size="14" font-weight="700">DRI · 微型 CEO</text>
+    <text x="350" y="55" text-anchor="middle" fill="#fecaca" font-size="10.5">定义目标 · 关键判断 · 调度资源 · 最终担责</text>
+    <text x="350" y="70" text-anchor="middle" fill="#fecaca" font-size="9.5">（人，不是 Agent）</text>
+
+    <!-- DRI 之间横向虚线（跨模块对齐契约） -->
+    <line x1="480" y1="45" x2="620" y2="45" stroke="#999" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <text x="550" y="38" text-anchor="middle" font-size="9" fill="#666">DRI ↔ DRI</text>
+    <text x="550" y="60" text-anchor="middle" font-size="8.5" fill="#888">接口契约 · 异步文档</text>
+
+    <!-- 工作方式流程条 -->
+    <rect x="40" y="105" width="620" height="36" rx="6" fill="#fef2f2" stroke="#7f1d1d" stroke-width="1.2"/>
+    <text x="100" y="127" text-anchor="middle" font-size="10" fill="#7f1d1d" font-weight="700">目标驱动</text>
+    <text x="100" y="137" text-anchor="middle" font-size="8.5" fill="#991b1b">DRI 定目标</text>
+    <text x="200" y="127" text-anchor="middle" font-size="10" fill="#7f1d1d" font-weight="700">→</text>
+    <text x="260" y="127" text-anchor="middle" font-size="10" fill="#7f1d1d" font-weight="700">调度 Agent</text>
+    <text x="260" y="137" text-anchor="middle" font-size="8.5" fill="#991b1b">拆任务 · 给边界</text>
+    <text x="370" y="127" text-anchor="middle" font-size="10" fill="#7f1d1d" font-weight="700">→</text>
+    <text x="430" y="127" text-anchor="middle" font-size="10" fill="#7f1d1d" font-weight="700">Agent 执行</text>
+    <text x="430" y="137" text-anchor="middle" font-size="8.5" fill="#991b1b">worktree 并行</text>
+    <text x="530" y="127" text-anchor="middle" font-size="10" fill="#7f1d1d" font-weight="700">→</text>
+    <text x="590" y="127" text-anchor="middle" font-size="10" fill="#7f1d1d" font-weight="700">DRI 判断</text>
+    <text x="590" y="137" text-anchor="middle" font-size="8.5" fill="#991b1b">Review · 拍板</text>
+
+    <!-- 向下箭头 DRI → Agent 集群 -->
+    <line x1="350" y1="80" x2="350" y2="105" stroke="#7f1d1d" stroke-width="2"/>
+    <polygon points="346,100 354,100 350,108" fill="#7f1d1d"/>
+    <line x1="350" y1="141" x2="350" y2="165" stroke="#7f1d1d" stroke-width="2"/>
+    <polygon points="346,160 354,160 350,168" fill="#7f1d1d"/>
+
+    <!-- Agent 集群 四个格子 -->
+    <rect x="60" y="170" width="130" height="60" rx="6" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.5"/>
+    <text x="125" y="195" text-anchor="middle" font-size="11" font-weight="700" fill="#0f766e">研究分析</text>
+    <text x="125" y="212" text-anchor="middle" font-size="9" fill="#134e4a">读代码 · 查文档</text>
+    <text x="125" y="224" text-anchor="middle" font-size="9" fill="#134e4a">出方案对比</text>
+
+    <rect x="210" y="170" width="130" height="60" rx="6" fill="#dbeafe" stroke="#1d4ed8" stroke-width="1.5"/>
+    <text x="275" y="195" text-anchor="middle" font-size="11" font-weight="700" fill="#1d4ed8">执行交付</text>
+    <text x="275" y="212" text-anchor="middle" font-size="9" fill="#1e3a5f">写代码 · 跑测试</text>
+    <text x="275" y="224" text-anchor="middle" font-size="9" fill="#1e3a5f">出 diff</text>
+
+    <rect x="360" y="170" width="130" height="60" rx="6" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+    <text x="425" y="195" text-anchor="middle" font-size="11" font-weight="700" fill="#b45309">流程跟进</text>
+    <text x="425" y="212" text-anchor="middle" font-size="9" fill="#78350f">跑 CI · 补文档</text>
+    <text x="425" y="224" text-anchor="middle" font-size="9" fill="#78350f">盯流水线</text>
+
+    <rect x="510" y="170" width="130" height="60" rx="6" fill="#ede9fe" stroke="#6d28d9" stroke-width="1.5"/>
+    <text x="575" y="195" text-anchor="middle" font-size="11" font-weight="700" fill="#6d28d9">跨部门协同</text>
+    <text x="575" y="212" text-anchor="middle" font-size="9" fill="#4c1d95">整理接口文档</text>
+    <text x="575" y="224" text-anchor="middle" font-size="9" fill="#4c1d95">同步给对接方</text>
+
+    <!-- Agent 之间不直接连线（虚线标注） -->
+    <text x="350" y="255" text-anchor="middle" font-size="9.5" fill="#888">Agent 之间不直接通信，统一向 DRI 汇报，由 DRI 调度和拍板</text>
+
+    <!-- 组织形态标签 -->
+    <rect x="120" y="275" width="460" height="45" rx="6" fill="#f5f5f5" stroke="#bbb" stroke-width="1"/>
+    <text x="350" y="293" text-anchor="middle" font-size="10" fill="#555" font-weight="600">组织形态：扁平化 · 结果导向 · 跨职能协同 · 人机混编</text>
+    <text x="350" y="310" text-anchor="middle" font-size="9.5" fill="#777">前置条件：高素质人才 · 坚实数据基础 · 高效工具支撑 · 成功示范样板</text>
+  </svg>
+
+  <div class="table-wrap">
+    <table>
+      <colgroup><col style="width:20%"><col style="width:40%"><col style="width:40%"></colgroup>
+      <thead><tr><th>关系</th><th>怎么做</th><th>不怎么做</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>人 ↔ 人</b></td>
+          <td>
+            <ul style="padding-left:16px;margin:0;">
+              <li>按模块边界拆任务，明确谁负责哪块</li>
+              <li>接口/契约先定义清楚，各自独立开发</li>
+              <li>对接走 PR 评论、文档，不走临时拉群</li>
+            </ul>
+          </td>
+          <td>
+            <ul style="padding-left:16px;margin:0;">
+              <li>不拉会同步"我做到哪了"</li>
+              <li>不互相 push 对方改代码</li>
+              <li>不口头约定接口（必须落文档）</li>
+            </ul>
+          </td>
+        </tr>
+        <tr>
+          <td><b>人 ↔ AI</b></td>
+          <td>
+            <ul style="padding-left:16px;margin:0;">
+              <li>人把需求"蒸馏"干净：目标、约束、验收标准</li>
+              <li>给 AI Agent 明确指令和边界，让它独立跑完</li>
+              <li>人 review 结果，不盯着它每一步操作</li>
+            </ul>
+          </td>
+          <td>
+            <ul style="padding-left:16px;margin:0;">
+              <li>不一步步指挥 AI Agent 写代码</li>
+              <li>不让 AI Agent 自己拍板架构决策</li>
+              <li>不把模糊需求扔给它自由发挥</li>
+            </ul>
+          </td>
+        </tr>
+        <tr>
+          <td><b>AI ↔ AI</b></td>
+          <td>
+            <ul style="padding-left:16px;margin:0;">
+              <li>独立任务用 worktree 隔离（见 Build 章节）</li>
+              <li>同一需求内的子任务用 Subagents 并行</li>
+              <li>输出都走 git diff，人来统一把关</li>
+            </ul>
+          </td>
+          <td>
+            <ul style="padding-left:16px;margin:0;">
+              <li>不让两个 Agent 在同一目录同时改</li>
+              <li>不让 Agent 互相 review 对方的代码</li>
+            </ul>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>什么时候必须拉会协同？</h3>
+  <p style="font-size:14px;color:var(--text-2);margin-bottom:10px;">高内聚低耦合不是什么都异步。遇到下面这些情况，该拉会还是要拉会：</p>
+  <div class="grid-2">
+    <div class="principle" style="border-left:3px solid var(--danger);">
+      <div class="p-num" style="color:var(--danger)">必须同步</div>
+      <div class="p-title">复杂决策 / 创意碰撞</div>
+      <div class="p-desc">架构选型、跨模块方案、技术债务取舍——这些需要多人讨论，异步文档讨论效率低。</div>
+    </div>
+    <div class="principle" style="border-left:3px solid var(--warn);">
+      <div class="p-num" style="color:var(--warn)">警惕信号</div>
+      <div class="p-title">长期不协作 → 互信缺失</div>
+      <div class="p-desc">如果大家只甩结果不沟通，团队会变成"陌生同事"。定期站会/技术分享不能省，只是不拿来做进度汇报。</div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top:16px;">
+    <b>一句话记住：</b>能独立完成的尽量独立，该协同的时候还是得协同。默认异步，必须同步的时候才拉会。
+  </div>
+</section>
+
+<!-- ===== Git Flow 分支环境映射（新手最懵） ===== -->
+<section id="gitflow">
+  <h2><span class="num">03</span>Git Flow 分支与环境映射</h2>
+  <p class="section-lead">新人最容易搞混的三件事：merge 还是 rebase、先合并还是先部署、哪个环境对应哪个分支。这一节直接给答案。</p>
+
+  <div class="flow">
+    <svg viewBox="0 0 860 380" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+      <!-- 环境条 -->
+      <rect x="20" y="20" width="120" height="50" rx="6" fill="#dbeafe" stroke="#1d4ed8"/>
+      <text x="80" y="42" text-anchor="middle" font-size="13" font-weight="700" fill="#1e3a5f">dev 环境</text>
+      <text x="80" y="58" text-anchor="middle" font-size="10" fill="#1e40af">自动部署</text>
+
+      <rect x="340" y="20" width="120" height="50" rx="6" fill="#fef3c7" stroke="#b45309"/>
+      <text x="400" y="42" text-anchor="middle" font-size="13" font-weight="700" fill="#78350f">uat 环境</text>
+      <text x="400" y="58" text-anchor="middle" font-size="10" fill="#92400e">运维手动部署</text>
+
+      <rect x="680" y="20" width="120" height="50" rx="6" fill="#fee2e2" stroke="#b91c1c"/>
+      <text x="740" y="42" text-anchor="middle" font-size="13" font-weight="700" fill="#7f1d1d">prod 环境</text>
+      <text x="740" y="58" text-anchor="middle" font-size="10" fill="#991b1b">运维手动部署</text>
+
+      <!-- 分支线 -->
+      <!-- develop -->
+      <line x1="20" y1="140" x2="800" y2="140" stroke="#0f766e" stroke-width="3"/>
+      <text x="30" y="130" font-size="12" font-weight="700" fill="#0f766e">develop</text>
+      <text x="30" y="158" font-size="10" fill="#666">开发主干，自动部署 dev</text>
+
+      <!-- feature 分支 -->
+      <line x1="150" y1="140" x2="150" y2="200" stroke="#888" stroke-width="2" stroke-dasharray="4,3"/>
+      <line x1="150" y1="200" x2="300" y2="200" stroke="#888" stroke-width="2"/>
+      <text x="225" y="193" text-anchor="middle" font-size="11" fill="#555">feature/xxx</text>
+      <line x1="300" y1="200" x2="300" y2="140" stroke="#888" stroke-width="2" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+
+      <!-- release 分支 -->
+      <line x1="450" y1="140" x2="450" y2="240" stroke="#b45309" stroke-width="2.5"/>
+      <line x1="450" y1="240" x2="620" y2="240" stroke="#b45309" stroke-width="2.5"/>
+      <text x="535" y="233" text-anchor="middle" font-size="11" font-weight="600" fill="#b45309">release/x.x.x</text>
+      <line x1="620" y1="240" x2="620" y2="140" stroke="#b45309" stroke-width="2.5" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+
+      <!-- main -->
+      <line x1="450" y1="310" x2="800" y2="310" stroke="#b91c1c" stroke-width="3"/>
+      <text x="460" y="300" font-size="12" font-weight="700" fill="#b91c1c">main</text>
+      <text x="460" y="328" font-size="10" fill="#666">生产主干</text>
+      <line x1="620" y1="240" x2="620" y2="310" stroke="#b91c1c" stroke-width="2.5" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+
+      <!-- hotfix -->
+      <line x1="700" y1="310" x2="700" y2="350" stroke="#7c3aed" stroke-width="2"/>
+      <text x="760" y="345" font-size="11" fill="#7c3aed">hotfix/*</text>
+      <line x1="700" y1="350" x2="780" y2="350" stroke="#7c3aed" stroke-width="2"/>
+      <line x1="780" y1="350" x2="780" y2="310" stroke="#7c3aed" stroke-width="2" stroke-dasharray="3,2" marker-end="url(#arr)"/>
+
+      <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#888"/></marker></defs>
+
+      <!-- 环境到分支连线 -->
+      <line x1="80" y1="70" x2="80" y2="135" stroke="#1d4ed8" stroke-width="1.5" stroke-dasharray="3,3"/>
+      <line x1="400" y1="70" x2="535" y2="235" stroke="#b45309" stroke-width="1.5" stroke-dasharray="3,3"/>
+      <line x1="740" y1="70" x2="740" y2="305" stroke="#b91c1c" stroke-width="1.5" stroke-dasharray="3,3"/>
+    </svg>
+  </div>
+
+  <h3>分支-环境对照速查</h3>
+  <div class="table-wrap">
+    <table>
+      <colgroup><col style="width:20%"><col style="width:25%"><col style="width:30%"><col style="width:25%"></colgroup>
+      <thead><tr><th>环境</th><th>对应分支</th><th>部署方式</th><th>用途</th></tr></thead>
+      <tbody>
+        <tr><td><b style="color:#1d4ed8">dev</b></td><td>develop</td><td>Codeup 自动部署</td><td>开发自测、联调</td></tr>
+        <tr><td><b style="color:#b45309">uat</b></td><td>release/*</td><td>运维手动触发</td><td>测试/产品验收</td></tr>
+        <tr><td><b style="color:#b91c1c">prod</b></td><td>main</td><td>运维手动触发</td><td>线上生产</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <details>
+    <summary>新手必读：merge 还是 rebase？什么时候用哪个？</summary>
+    <div class="detail-body">
+      <p style="margin-bottom:10px;">这是新人最常问的问题。规则很简单：</p>
+      <table style="margin:8px 0;">
+        <colgroup><col style="width:25%"><col style="width:37.5%"><col style="width:37.5%"></colgroup>
+        <thead><tr><th>场景</th><th>用什么</th><th>为什么</th></tr></thead>
+        <tbody>
+          <tr><td><b>feature 分支更新代码</b></td><td><code>git rebase develop</code></td><td>保持提交历史线性，PR 干净</td></tr>
+          <tr><td><b>feature 合回 develop</b></td><td><b>PR Merge（不 rebase）</b></td><td>保留合并节点，可追溯这次发布包含哪些 feature</td></tr>
+          <tr><td><b>release 合回 main</b></td><td><b>PR Merge</b></td><td>打版本标签，保留发布节点</td></tr>
+          <tr><td><b>hotfix 合回 main</b></td><td><b>PR Merge</b></td><td>紧急修复也要留痕</td></tr>
+        </tbody>
+      </table>
+      <div class="warn-box" style="margin-top:10px;">
+        <b>铁律：</b>永远不要在已经 push 到远程的公共分支（develop/main）上 rebase。rebase 只在你自己的 feature 分支上做。
+      </div>
+    </div>
+  </details>
+
+  <details>
+    <summary>新手必读：我们为什么不用 git flow release finish 命令？</summary>
+    <div class="detail-body">
+      <p style="margin-bottom:8px;">标准 <code>git flow release finish</code> 会一口气做三件事：</p>
+      <ol class="steps" style="margin-bottom:10px;">
+        <li>合并 release → main</li>
+        <li>打版本标签</li>
+        <li>合并 release → develop</li>
+        <li>删除 release 分支</li>
+      </ol>
+      <p style="margin-bottom:8px;">但我们的流程需要<b>先发 prod、观察没问题、再合回 develop</b>——因为如果 prod 出问题要 hotfix，develop 上不应该带着这个未验证的发布。所以我们<b>不用这个命令</b>，手动分步走 PR：</p>
+      <table style="margin:8px 0;">
+        <colgroup><col style="width:8%"><col style="width:42%"><col style="width:50%"></colgroup>
+        <thead><tr><th>步骤</th><th>动作</th><th>操作方式</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>uat 验证通过后，提 PR：release → main</td><td>Codeup 建 PR，合并后打版本标签</td></tr>
+          <tr><td>2</td><td>main 合入，运维发 prod</td><td>发布后观察 30 分钟监控</td></tr>
+          <tr><td>3</td><td>prod 没问题，再提 PR：release → develop</td><td>把这次发布的改动合回开发主干</td></tr>
+          <tr><td>4</td><td>develop 合入后，删 release 分支</td><td>Codeup 上删远程分支</td></tr>
+        </tbody>
+      </table>
+      <div class="warn-box" style="margin-top:10px;">
+        <b>关键：</b>release → develop 这一步必须在 prod 确认没问题之后再做。不要图省事用 <code>git flow release finish</code> 一把梭，那样 develop 会先于 prod 拿到未验证的代码。
+      </div>
+    </div>
+  </details>
+
+  <details>
+    <summary>新手必读：先合并还是先部署？正确顺序是什么？</summary>
+    <div class="detail-body">
+      <p style="margin-bottom:8px;">以一个 feature 上线为例，正确顺序是：</p>
+      <ol class="steps">
+        <li>在 feature 分支开发，本地跑 lint + 单测</li>
+        <li>提 PR 到 develop，等资深工程师 review</li>
+        <li>Review 通过后 <b>Merge 到 develop</b>，Codeup 自动部署到 dev</li>
+        <li>dev 环境验证没问题</li>
+        <li>从 develop 切出 <code>release/x.x.x</code> 分支</li>
+        <li>通知运维部署 release 分支到 <b>uat</b></li>
+        <li>uat 验证通过（测试 + 产品验收）</li>
+        <li>提 PR 把 release 合到 <b>main</b>，打版本标签</li>
+        <li>通知运维部署 main 到 <b>prod</b></li>
+        <li>观察线上指标，确认没问题后把 release 合回 develop</li>
+      </ol>
+      <div class="warn-box" style="margin-top:10px;">
+        <b>关键顺序：</b>先合并到对应分支，再让运维部署那个分支。不要"先在 uat 上测试一下再合代码"——uat 上跑的必须是已经合并的 release 分支，不能直接从 feature 分支部署。
+      </div>
+    </div>
+  </details>
+</section>
+
+<!-- ===== 六阶段 ===== -->
+<section id="stages">
+  <h2><span class="num">04</span>六个阶段怎么做</h2>
+  <p class="section-lead">每个阶段都给出核心做法和常见坑。项目记忆文件和命令以当前团队使用的 Agent 工具为准，直接照做即可。</p>
+
+  <h3>每阶段产出物总览</h3>
+  <div class="table-wrap">
+    <table>
+      <colgroup><col style="width:15%"><col style="width:20%"><col style="width:30%"><col style="width:35%"></colgroup>
+      <thead><tr><th>阶段</th><th>产出物</th><th>谁审批</th><th>过不了怎么办</th></tr></thead>
+      <tbody>
+        <tr><td><b>1. Plan</b></td><td><code>intent.md</code></td><td>人（DRI）</td><td>没想清楚就别动手，写大白话想法让 AI 追问</td></tr>
+        <tr><td><b>2. Design</b></td><td><code>spec.md</code></td><td>产品负责人</td><td>只写"做什么、做成什么样"，不写"怎么做"</td></tr>
+        <tr><td><b>3. Build</b></td><td><code>plan.md</code> + 代码 + 测试</td><td>工程师</td><td>先改文档再改代码，返工成本低</td></tr>
+        <tr><td><b>4. Test</b></td><td><code>Evals</code> 评测集</td><td>自动回归</td><td>20-50 个真实任务，掉分禁合并</td></tr>
+        <tr><td><b>5. Deploy</b></td><td><code>REVIEW.md</code></td><td>人最终审批</td><td>AI 先审查标记问题，Hooks 拦截违规部署</td></tr>
+        <tr><td><b>6. Maintain</b></td><td>新 <code>intent.md</code></td><td>AI 诊断 → 人确认</td><td>监控指标异常 → AI 诊断 → 自动回到 Plan 阶段</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PLAN -->
+  <div class="stage-block" id="stage-plan">
+    <div class="stage-head">
+      <div class="stage-num">1</div>
+      <div>
+        <div class="stage-title">Plan · 写清楚再让 Agent 动手</div>
+        <div class="stage-sub">一句话 prompt 直接开工，是返工的最大来源</div>
+      </div>
+    </div>
+    <h3>怎么做</h3>
+    <ol class="steps">
+      <li>需求开始前，先写一份 <code>plan.md</code>（可以让 Agent 帮你起草，你改）。</li>
+      <li>计划必须包含：目标、非目标、可机器判定的验收标准、涉及哪些模块、有没有数据库变更。</li>
+      <li>自己先过一遍"陌生人测试"：没参与讨论的人拿到这个 plan 能直接做吗？不能就补。</li>
+      <li>用 Agent 的 <b>Plan Mode</b> 启动，让它先输出实现计划，你确认后再让它写代码。</li>
+    </ol>
+    <details>
+      <summary>展开：plan.md 完整模板（交易链路适用）</summary>
+      <div class="detail-body">
+<pre><span class="cmt"># Feature: &lt;名称&gt;  关联需求：JIRA/工单号</span>
+
+<span class="key">## 目标</span>
+一句话。例：订单超时未支付自动取消并释放库存。
+
+<span class="key">## 非目标</span>
+- 本次不做退款流程
+- 本次不改消息推送模板
+
+<span class="key">## 验收标准</span>
+- [ ] 订单超过 30 分钟未支付，状态变为 CANCELLED
+- [ ] 取消后库存自动释放回可用库存
+- [ ] 用户收到取消通知（短信+站内信）
+- [ ] 重复取消不产生副作用（幂等）
+
+<span class="key">## 涉及模块</span>
+- 修改：order-service / 定时任务 / 库存服务
+- 新增：取消订单的领域事件
+
+<span class="key">## 数据库变更</span>
+- 是否有 DDL：是/否
+- 如有，回滚脚本：xxx.sql
+
+<span class="key">## 风险</span>
+- 并发取消导致超卖 → 用库存乐观锁解决
+- 回滚方式：feature flag / 回退代码重发</pre>
+      </div>
+    </details>
+    <div class="antipattern">
+      <div class="label">不要这样</div>
+      <ul>
+        <li>"帮我加个订单取消功能"——Agent 会自由发挥，产出你不要的东西</li>
+        <li>验收标准写"用户体验更好"——不可机器判定，没法测试</li>
+        <li>涉及数据库变更但没写回滚脚本——交易链路回滚可能要运维帮忙</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- DESIGN -->
+  <div class="stage-block" id="stage-design">
+    <div class="stage-head">
+      <div class="stage-num">2</div>
+      <div>
+        <div class="stage-title">Design · 关键决策人审</div>
+        <div class="stage-sub">交易链路的架构决策不能让 Agent 自己拍板</div>
+      </div>
+    </div>
+    <h3>怎么做</h3>
+    <ol class="steps">
+      <li>让 Agent 先列 2-3 个候选方案和各自的取舍，不要让它直接选一个就写。</li>
+      <li>涉及订单、支付、库存、资金这些核心链路的改动，方案必须给资深工程师过一眼。</li>
+      <li>重要决策写在 PR 描述里：为什么这么做、放弃了什么、什么条件下会推翻。</li>
+      <li>明确告诉 Agent <b>不能动什么</b>：不要改 legacy 模块、不要新增依赖、不要破坏现有接口契约。</li>
+    </ol>
+    <div class="antipattern">
+      <div class="label">不要这样</div>
+      <ul>
+        <li>让 Agent 同时做设计和写代码——它会选最容易写的方案，不是最合理的</li>
+        <li>设计只在聊天记录里——下次会话 Agent 就忘了，会重新发明轮子</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- BUILD -->
+  <div class="stage-block" id="stage-build">
+    <div class="stage-head">
+      <div class="stage-num">3</div>
+      <div>
+        <div class="stage-title">Build · 用 AI Agent 高效写代码</div>
+        <div class="stage-sub">终端 Agent，Plan Mode + 项目记忆 + Subagents</div>
+      </div>
+    </div>
+    <h3>每次新会话必须做的事</h3>
+    <ol class="steps">
+      <li>在仓库根目录放 <code>AGENTS.md</code>（Agent 会自动读取），写清楚项目规范。</li>
+      <li>用 Agent 的 Plan Mode 启动：先让它出计划，你确认后再动手。</li>
+      <li>一次只让 Agent 做一个小改动——写完、跑测试、确认，再让它做下一个。</li>
+      <li>独立任务（比如写接口 + 写测试）可以用 Subagents 并行，但最后你统一 review。</li>
+      <li>关键决策用 <code>/memory retain</code> 存下来，下次会话不用重新说。</li>
+    </ol>
+
+    <h3>AGENTS.md 模板（本团队）</h3>
+<pre><span class="cmt"># 项目：XXX 服务</span>
+技术栈：Java 17 / Spring Boot / MySQL / Redis / Kafka
+
+<span class="cmt"># 常用命令</span>
+- 构建：mvn clean package -DskipTests
+- 测试：mvn test
+- Lint：mvn checkstyle:check
+提交前三个必须全绿。
+
+<span class="cmt"># 代码规范</span>
+- Controller 只做参数校验和路由，业务逻辑在 Service
+- 数据库操作必须走 Mapper，不要在 Service 里拼 SQL
+- 业务异常继承 BizException，错误码统一管理
+- 交易链路接口必须加幂等设计
+
+<span class="cmt"># 不能做的事</span>
+- 不要动 src/legacy/ 目录
+- 不要引入新的第三方库（需要先问 Tech Lead）
+- 不要在循环里调用 RPC 或数据库查询
+- 所有对外接口必须写参数校验和异常处理</pre>
+
+    <h3>docs 目录：业务知识沉淀（不可变）</h3>
+    <p style="font-size:14px;color:var(--text-2);margin-bottom:8px;">每个项目根目录 <code>docs/</code> 下放业务文档——Agent 懂代码结构，但不懂业务语义。</p>
+    <ul style="padding-left:20px;font-size:14px;line-height:1.8;">
+      <li><b>放什么：</b>业务场景说明、状态机、交易规则、接口契约——这些是"不可变文档"，由人维护</li>
+      <li><b>怎么更新：</b>改业务逻辑必须<b>先改 docs 再改代码</b>，同一个 PR。不允许只改代码不改 docs</li>
+      <li><b>多久 review：</b>每季度 DRI 过一遍 docs 是否过时，过期的比没有更危险</li>
+    </ul>
+
+    <h3>Skills 库（awesome-rules 仓）</h3>
+    <p style="font-size:14px;color:var(--text-2);margin-bottom:8px;">高频操作沉淀成可复用的 Skill，存在 <code>awesome-rules</code> 仓，不用每次重新跟 Agent 描述。项目里引用即可。</p>
+    <ul style="padding-left:20px;font-size:14px;line-height:1.8;">
+      <li><b>怎么用：</b>在 AGENTS.md 里引用需要的 Skill，Agent 按需加载，不用全塞进上下文</li>
+      <li><b>沉淀时机：</b>同一个操作跟 Agent 描述过 3 次以上，就该写成 Skill 放进 awesome-rules</li>
+      <li><b>已有示例：</b>查线上日志、写 SQL 排查、生成回滚脚本、PR 描述模板等</li>
+    </ul>
+
+    <details>
+      <summary>展开：当前 Agent 工具命令速查（以 omp 为例）</summary>
+      <div class="detail-body">
+        <table style="margin:8px 0;">
+          <colgroup><col style="width:30%"><col style="width:70%"></colgroup>
+          <thead><tr><th>命令</th><th>用途</th></tr></thead>
+          <tbody>
+            <tr><td><code>/memory view</code></td><td>查看当前项目已记住的内容</td></tr>
+            <tr><td><code>/memory retain &lt;事实&gt;</code></td><td>把重要决策存为长期记忆</td></tr>
+            <tr><td>Plan Mode 启动</td><td>当前工具默认先出计划再执行，确认后才改代码</td></tr>
+            <tr><td>Subagents</td><td>独立任务并行派发，主会话把关</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+    <details>
+      <summary>展开：多 Agent 并行开发——用 git worktree 隔离会话</summary>
+      <div class="detail-body">
+        <p style="margin-bottom:10px;">同时跑多个 Agent 会话（一个改接口、一个写测试、一个重构），如果在同一个目录里，两个 Agent 会互相覆盖文件、git 状态打架。<b>正确做法是每个 Agent 一个独立 worktree</b>：同一个仓库，多个工作目录，各 check out 各的分支。</p>
+
+        <h4 style="margin:12px 0 8px;font-size:14px;">worktree 并行示意</h4>
+        <svg viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:8px auto;max-width:100%;">
+          <!-- 共享 .git -->
+          <rect x="280" y="10" width="140" height="36" rx="6" fill="#1e293b"/>
+          <text x="350" y="33" text-anchor="middle" fill="white" font-size="12" font-weight="600">共享 .git 对象库</text>
+          <!-- 连接线 -->
+          <line x1="350" y1="46" x2="180" y2="80" stroke="#999" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <line x1="350" y1="46" x2="520" y2="80" stroke="#999" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <!-- worktree A -->
+          <rect x="60" y="80" width="240" height="80" rx="8" fill="#ccfbf1" stroke="#0f766e" stroke-width="2"/>
+          <text x="180" y="102" text-anchor="middle" font-size="13" font-weight="700" fill="#0f766e">worktree A</text>
+          <text x="180" y="120" text-anchor="middle" font-size="11" fill="#134e4a">分支 feature/order-cancel</text>
+          <text x="180" y="138" text-anchor="middle" font-size="11" fill="#134e4a">Agent 会话 A（独立上下文）</text>
+          <text x="180" y="154" text-anchor="middle" font-size="10" fill="#0f766e" font-weight="600">端口 8081</text>
+          <!-- worktree B -->
+          <rect x="400" y="80" width="240" height="80" rx="8" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2"/>
+          <text x="520" y="102" text-anchor="middle" font-size="13" font-weight="700" fill="#1d4ed8">worktree B</text>
+          <text x="520" y="120" text-anchor="middle" font-size="11" fill="#1e3a5f">分支 feature/order-refund</text>
+          <text x="520" y="138" text-anchor="middle" font-size="11" fill="#1e3a5f">Agent 会话 B（独立上下文）</text>
+          <text x="520" y="154" text-anchor="middle" font-size="10" fill="#1d4ed8" font-weight="600">端口 8082</text>
+        </svg>
+
+        <h4 style="margin:12px 0 8px;font-size:14px;">标准操作流程</h4>
+<pre><span class="cmt"># 假设主仓库在 ~/repo/order-service</span>
+
+<span class="cmt"># 1. 为任务 A 建一个独立 worktree（新目录 + 新分支）</span>
+git worktree add ../order-A feature/order-cancel
+
+<span class="cmt"># 2. 为任务 B 再建一个</span>
+git worktree add ../order-B feature/order-refund
+
+<span class="cmt"># 3. 两个终端分别进去，各启动一个 Agent</span>
+cd ../order-A && omp
+cd ../order-B && omp
+
+<span class="cmt"># 4. 各自开发、各自提 PR</span>
+<span class="cmt"># 5. 任务完成后清理 worktree</span>
+git worktree remove ../order-A
+git worktree remove ../order-B</pre>
+
+        <h4 style="margin:14px 0 8px;font-size:14px;">为什么不用分支切换就行？</h4>
+        <ul style="padding-left:18px;font-size:13.5px;line-height:1.7;">
+          <li>切换分支要 stash 当前未提交的改动，来回切很容易丢东西</li>
+          <li>两个 Agent 会话都有自己的上下文（已打开的文件、记忆），切分支会搞混</li>
+          <li>worktree 共享同一个 .git 对象库，不占额外磁盘存两份代码</li>
+        </ul>
+
+        <h4 style="margin:14px 0 8px;font-size:14px;">注意事项</h4>
+        <div class="warn-box" style="margin:8px 0;font-size:13px;">
+          <b>1. 端口冲突：</b>两个 worktree 都在本地起服务，端口要错开（A 用 8081，B 用 8082）。<br/>
+          <b>2. 不要在两个 worktree 改同一个文件：</b>合并时必冲突。并行任务提前拆清楚文件边界。<br/>
+          <b>3. 数据库：</b>多个 worktree 连同一个本地库没问题，但跑迁移脚本前确认其他 worktree 不在跑测试。<br/>
+          <b>4. 用完就删：</b>任务合并后立刻 <code>git worktree remove</code>，不然目录越堆越多。<br/>
+          <b>5. 查看有哪些 worktree：</b><code>git worktree list</code>。
+        </div>
+
+        <h4 style="margin:14px 0 8px;font-size:14px;">什么时候用 worktree，什么时候用 Subagents？</h4>
+        <table style="margin:8px 0;">
+          <colgroup><col style="width:50%"><col style="width:50%"></colgroup>
+          <thead><tr><th>场景</th><th>用什么</th></tr></thead>
+          <tbody>
+            <tr><td>一个需求里的两个独立子任务（写接口 + 写测试）</td><td><b>Subagents</b>：同一个 Agent 会话里派，上下文共享，你统一 review</td></tr>
+            <tr><td>两个完全独立的需求/任务，要长时间并行</td><td><b>worktree</b>：两个独立 Agent 会话，互不干扰</td></tr>
+            <tr><td>一个人同时修 bug + 做新功能</td><td><b>worktree</b>：bug 要紧急合，新功能还没好，别互相等</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+    <h3>三步写代码：计划 → 写 → 自查</h3>
+    <ol style="padding-left:20px;font-size:14px;line-height:1.8;">
+      <li><b>先出计划（plan.md）：</b>工程师审计划，消除模糊后再动手。先改文档返工更轻。</li>
+      <li><b>AI 写代码：</b>按计划一步步写，每步跑测试。</li>
+      <li><b>AI 自查：</b>写完自动跑测试 + 构建，全部通过才算完成。不通过自己改，最多 5 轮。</li>
+    </ol>
+
+    <div class="tip" style="margin-top:10px;">
+      <b>子 Agent 复核（避免灯下黑）：</b>核心场景的代码，让另一个独立的子 Agent 从"挑刺"角度再看一遍——它不知道你原来怎么想的，更容易发现问题。
+    </div>
+
+    <h3>陌生人 Reviewer 闭环（核心场景）</h3>
+    <p style="font-size:14px;color:var(--text-2);margin-bottom:8px;">参考 Peter Steinberger（OpenClaw 之父）的做法：主 Agent 写完代码后，唤起一个<b>全新空白上下文</b>的子 Agent 当 Reviewer，双方来回辩论：</p>
+    <ol style="padding-left:20px;font-size:14px;line-height:1.8;">
+      <li>主 Agent 写完代码，唤起空白 Reviewer："帮我把刚才改的代码全盘过一遍"</li>
+      <li>Reviewer 挑出问题回传给主 Agent</li>
+      <li>主 Agent 辩解或认错修改，改完再提交给 Reviewer</li>
+      <li>来回拉扯最多 10 个回合，直到双方达成一致</li>
+    </ol>
+    <p style="font-size:13px;color:var(--text-3);margin-top:6px;">虽然要花 1-2 小时，但对抗测试的严苛度远超人工 review。非核心场景可以跳过，核心交易链路必须跑。</p>
+
+    <div class="antipattern">
+      <div class="label">不要这样</div>
+      <ul>
+        <li>一个 prompt 让 Agent 改 5 个文件——review 起来你会崩溃</li>
+        <li>让 Agent 自己说"完成了"就算完——必须你自己跑测试确认</li>
+        <li>无限制让 Agent 改——最多 5 轮自修复，超过就人工介入</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- TEST -->
+  <div class="stage-block" id="stage-test">
+    <div class="stage-head">
+      <div class="stage-num">4</div>
+      <div>
+        <div class="stage-title">Test · 边写边测，硬门禁不绕过</div>
+        <div class="stage-sub">Lint 和单测红灯 = 不能合并，没有例外</div>
+      </div>
+    </div>
+    <h3>怎么做</h3>
+    <ol class="steps">
+      <li>让 Agent 写代码的同时把单测一起写了——不要留到最后补。</li>
+      <li>本地必须跑通：lint + 单测全绿，再提 PR。</li>
+      <li>CI 红灯不要 skip——让 Agent 看日志、改到绿为止，最多 5 轮。</li>
+      <li>交易链路的改动，必须补边界 case：空值、并发、幂等、异常路径。</li>
+      <li>改完测试跑全量，不要只跑你改的那个文件。</li>
+    </ol>
+    <div class="tip">
+      <b>什么时候算写完：</b>不是 Agent 说"完成了"，而是——lint 绿 + 单测绿 + 你自己看懂 diff + 边界 case 覆盖了。四个条件同时满足才算。
+    </div>
+
+    <h3>AI 写的测试，信多少？</h3>
+    <div class="table-wrap">
+      <table>
+        <colgroup><col style="width:30%"><col style="width:35%"><col style="width:35%"></colgroup>
+        <thead><tr><th>场景</th><th>信任程度</th><th>你要做什么</th></tr></thead>
+        <tbody>
+          <tr><td><b>非核心场景</b>（后台管理、内部工具、CRUD）</td><td>基本全信</td><td>抽查断言是否真的验证了逻辑，而不是空跑</td></tr>
+          <tr><td><b>核心交易链路</b>（下单、支付、退款、对账）</td><td>必须人工审核</td><td>逐行看测试用例、边界覆盖、断言强度，Agent 写的测试可能"为了绿而绿"</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Evals 评测闭环（核心场景）</h3>
+    <p style="font-size:14px;color:var(--text-2);margin-bottom:8px;">光靠单测不够——核心链路要维护一个 <b>20-50 个真实任务的评测集</b>，每次代码变更或 Agent 配置变更都自动跑一遍，通过率掉了就禁止合并。</p>
+    <ul style="padding-left:20px;font-size:14px;line-height:1.8;">
+      <li><b>同等待遇：</b>代码变更和 Agent 配置变更（CLAUDE.md / Skills / Hooks 改动）一视同仁，都要跑 Evals</li>
+      <li><b>持续回归：</b>不是提测前才跑，每次 PR 自动跑</li>
+      <li><b>掉分禁合并：</b>通过率比基线低就红，不许强合</li>
+      <li><b>线上 bug 转 Evals：</b>每次线上修复后，补一个评测用例进集子里，下次自动检测</li>
+    </ul>
+
+    <div class="antipattern">
+      <div class="label">不要这样</div>
+      <ul>
+        <li>CI 红了就找"赶上线"理由跳过——下次技术债翻倍还</li>
+        <li>让 Agent 删掉跑不过的测试来"通过"——这是在掩盖问题</li>
+        <li>只测 happy path——交易链路出问题都在异常路径</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- DEPLOY -->
+  <div class="stage-block" id="stage-deploy">
+    <div class="stage-head">
+      <div class="stage-num">5</div>
+      <div>
+        <div class="stage-title">Deploy · 按 Git Flow 流程走，不跳步</div>
+        <div class="stage-sub">dev 自动 → uat 运维发 → prod 运维发，按环境逐级验证</div>
+      </div>
+    </div>
+    <h3>发布流程（务必照做）</h3>
+    <ol class="steps">
+      <li><b>develop → dev：</b>PR 合并到 develop 后 Codeup 自动部署 dev，你自己验证。</li>
+      <li><b>切 release：</b>从 develop 切 <code>release/x.x.x</code>，<b>只修 bug，不加新功能</b>。</li>
+      <li><b>uat 验证：</b>通知运维部署 release 到 uat，测试和产品验收。</li>
+      <li><b>合 main：</b>uat 通过后，提 PR 把 release 合到 main，打版本标签。</li>
+      <li><b>prod 发布：</b>通知运维部署 main 到生产，发布后盯 30 分钟监控。</li>
+      <li><b>回 develop：</b>发布确认没问题后，<b>单独再提一个 PR</b> 把 release 合回 develop，不要用 <code>git flow release finish</code>（它会一步合 main+develop，把未验证代码带进 develop）。</li>
+    </ol>
+    <div class="warn-box">
+      <b>不要用 <code>git flow release finish</code>：</b>这个命令会原子性地把 release 同时合 main 和 develop。我们的流程要求 prod 验证通过后才合回 develop，所以必须手动分两次 PR。详见上面"为什么不用 release finish"折叠块。
+    </div>
+
+    <h3>紧急回滚怎么做</h3>
+    <div class="warn-box">
+      生产出问题时：<b>先找运维回滚旧版本</b>（不用先自己改代码），同时你立刻定位原因。回滚后再走 hotfix 流程修复。不要在 prod 上直接改代码。
+    </div>
+
+    <h3>哪些路径必须资深 review</h3>
+    <div class="table-wrap">
+      <table>
+        <colgroup><col style="width:35%"><col style="width:65%"></colgroup>
+        <thead><tr><th>敏感路径</th><th>要求</th></tr></thead>
+        <tbody>
+          <tr><td>订单、支付、资金相关</td><td>必须资深工程师 + Tech Lead 双人 review</td></tr>
+          <tr><td>数据库 DDL / 表结构变更</td><td>必须有回滚脚本，提前告知运维</td></tr>
+          <tr><td>对外 API 接口变更</td><td>不能 breaking change，新增字段可以，删改必须兼容</td></tr>
+          <tr><td>权限、鉴权相关</td><td>必须资深 review</td></tr>
+          <tr><td>普通工具类 / 内部后台</td><td>一人 review 即可</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="antipattern">
+      <div class="label">不要这样</div>
+      <ul>
+        <li>feature 分支直接部署 uat 测——uat 跑的必须是 release 分支</li>
+        <li>release 分支上继续加新功能——要加新功能等下一个版本</li>
+        <li>uat 没测完就发 prod——交易链路出问题代价很大</li>
+        <li>出问题先慌着改代码——先回滚止血，再修</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- MAINTAIN -->
+  <div class="stage-block" id="stage-maintain">
+    <div class="stage-head">
+      <div class="stage-num">6</div>
+      <div>
+        <div class="stage-title">Maintain · 上线后盯什么</div>
+        <div class="stage-sub">发布不是终点，线上验证才是</div>
+      </div>
+    </div>
+    <ol class="steps">
+      <li>prod 发布后，自己盯 30 分钟：错误率、核心接口耗时、订单量有没有异常。</li>
+      <li>发现问题先关流量/回滚，再定位原因。</li>
+      <li>踩过的坑（比如某个配置项容易漏、某个边界 case 没想到）用 <code>/memory retain</code> 记下来。</li>
+      <li>定期让 Agent 扫描热点路径，提性能优化 PR（这是后面的事，先把手头流程走顺）。</li>
+    </ol>
+
+    <h3>翻车复盘三步闭环</h3>
+    <p style="font-size:14px;color:var(--text-2);margin-bottom:8px;">线上出问题后，光写复盘文档不够——要确保 Agent 下次不再犯同样的错：</p>
+    <ol style="padding-left:20px;font-size:14px;line-height:1.8;">
+      <li><b>写复盘文档</b>：存档，讲清楚什么问题、根因、影响</li>
+      <li><b>AGENTS.md 加一条"别再犯"</b>：把教训写进项目规则，Agent 下次自动遵守</li>
+      <li><b>Evals 加一个用例</b>：下次自动回归，再犯直接红</li>
+    </ol>
+    <p style="font-size:13px;color:var(--text-3);margin-top:6px;">三步走完才算复盘结束。只写文档不加规则和评测 = 下次还会犯。</p>
+  </div>
+</section>
+
+<!-- ===== 硬门禁清单 ===== -->
+<section id="gates">
+  <h2><span class="num">05</span>硬门禁清单：每个环节必须过什么</h2>
+  <p class="section-lead">硬门禁 = 红灯就不能往下走，没有"赶上线"例外。按本地开发 → PR → release → prod 四个环节逐层加严。</p>
+
+  <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:16px auto;max-width:100%;">
+    <!-- 漏斗四层 -->
+    <polygon points="50,10 650,10 620,55 80,55" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.5"/>
+    <text x="350" y="37" text-anchor="middle" font-size="13" font-weight="700" fill="#0f766e">① 本地开发 — 你自己跑，跑不过别提 PR</text>
+
+    <polygon points="80,60 620,60 580,105 120,105" fill="#dbeafe" stroke="#1d4ed8" stroke-width="1.5"/>
+    <text x="350" y="87" text-anchor="middle" font-size="13" font-weight="700" fill="#1d4ed8">② PR → develop — CI 硬阻断，review 通过</text>
+
+    <polygon points="120,110 580,110 530,155 170,155" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+    <text x="350" y="137" text-anchor="middle" font-size="13" font-weight="700" fill="#b45309">③ release → uat — 集成测试 + DB 回滚脚本</text>
+
+    <polygon points="170,160 530,160 480,195 220,195" fill="#fee2e2" stroke="#b91c1c" stroke-width="1.5"/>
+    <text x="350" y="183" text-anchor="middle" font-size="13" font-weight="700" fill="#b91c1c">④ prod — 人工审批 + 回滚方案确认</text>
+  </svg>
+
+  <h3>Agent 权限与安全边界（红线）</h3>
+  <div class="table-wrap">
+    <table>
+      <colgroup><col style="width:25%"><col style="width:75%"></colgroup>
+      <thead><tr><th>边界</th><th>规则</th></tr></thead>
+      <tbody>
+        <tr><td><b>代码推送权限</b></td><td>Agent 无权直接 push 到 <code>main</code> / <code>develop</code>，只能通过 <code>feature/*</code> 分支提 PR，由人 review 后合并</td></tr>
+        <tr><td><b>生产数据库</b></td><td>可读不可写；敏感表/敏感字段（用户手机号、身份证、交易密码相关）配置不可访问，Agent 查不到</td></tr>
+        <tr><td><b>密钥与凭据</b></td><td>Agent 不能读取配置中心生产密钥；开发环境密钥脱敏后使用</td></tr>
+        <tr><td><b>部署权限</b></td><td>Agent 不能触发 uat / prod 部署，只能跑 dev 环境自动流水线</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>① 本地开发（你自己跑，跑不过别提 PR）</h3>
+  <div class="table-wrap">
+    <table>
+      <colgroup><col style="width:22%"><col style="width:43%"><col style="width:35%"></colgroup>
+      <thead><tr><th>门禁</th><th>检查什么</th><th>命令</th></tr></thead>
+      <tbody>
+        <tr><td><b>代码格式</b></td><td>缩进、import 顺序、命名风格统一</td><td><code>mvn spotless:apply</code> 或 checkstyle</td></tr>
+        <tr><td><b>静态检查</b></td><td>空指针、未关闭资源、可疑写法、循环里调 RPC/DB</td><td><code>mvn checkstyle:check pmd:check spotbugs:check</code></td></tr>
+        <tr><td><b>编译通过</b></td><td>类型错误、依赖冲突</td><td><code>mvn clean compile</code></td></tr>
+        <tr><td><b>单元测试</b></td><td>你改的模块的单测全绿</td><td><code>mvn test -Dtest=你改的类</code></td></tr>
+        <tr><td><b>大测试全量</b></td><td>确认没改坏别的地方</td><td><code>mvn test</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>② PR 到 develop（Codeup CI 自动跑，红灯不能合并）</h3>
+  <div class="table-wrap">
+    <table>
+      <colgroup><col style="width:22%"><col style="width:43%"><col style="width:35%"></colgroup>
+      <thead><tr><th>门禁</th><th>检查什么</th><th>级别</th></tr></thead>
+      <tbody>
+        <tr><td><b>编译 + Lint</b></td><td>和本地一致，CI 上再跑一遍</td><td style="color:#b91c1c;font-weight:600">硬阻断</td></tr>
+        <tr><td><b>单元测试全量</b></td><td>所有单测必须绿</td><td style="color:#b91c1c;font-weight:600">硬阻断</td></tr>
+        <tr><td><b>测试覆盖率</b></td><td>新增代码覆盖率 ≥ 80%，总覆盖率不能比 main 低</td><td style="color:#b45309;font-weight:600">建议先 warn，后硬卡</td></tr>
+        <tr><td><b>依赖漏洞扫描</b></td><td>第三方库有没有已知 CVE</td><td style="color:#b45309;font-weight:600">高危阻断，中危提示</td></tr>
+        <tr><td><b>PR Review</b></td><td>至少 1 人 approve；交易链路 / DB 变更 / 对外接口 = 2 人</td><td style="color:#b91c1c;font-weight:600">硬阻断</td></tr>
+        <tr><td><b>不能 draft 直接合</b></td><td>草稿 PR 必须标记 ready 才能合</td><td style="color:#b91c1c;font-weight:600">硬阻断</td></tr>
+        <tr><td><b>commit 规范</b></td><td>commit message 符合规范（feat/fix/refactor 开头）</td><td style="color:#888">建议，暂不硬卡</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>③ release 分支（发 uat 前，比 PR 更严）</h3>
+  <div class="table-wrap">
+    <table>
+      <colgroup><col style="width:22%"><col style="width:43%"><col style="width:35%"></colgroup>
+      <thead><tr><th>门禁</th><th>检查什么</th><th>级别</th></tr></thead>
+      <tbody>
+        <tr><td><b>上面所有 +</b></td><td>PR 阶段全部门禁在 release 分支再跑一遍</td><td style="color:#b91c1c;font-weight:600">硬阻断</td></tr>
+        <tr><td><b>集成测试</b></td><td>跨服务接口联调测试通过</td><td style="color:#b91c1c;font-weight:600">硬阻断</td></tr>
+        <tr><td><b>DB 变更检查</b></td><td>有 DDL 必须配套回滚脚本，提前通知运维</td><td style="color:#b91c1c;font-weight:600">硬阻断</td></tr>
+        <tr><td><b>关键接口冒烟</b></td><td>核心交易链路接口 P99 耗时不超过基线</td><td style="color:#b45309;font-weight:600">提示，超标要说明</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>④ prod 发布前（人工 + 流程门禁）</h3>
+  <div class="table-wrap">
+    <table>
+      <colgroup><col style="width:22%"><col style="width:43%"><col style="width:35%"></colgroup>
+      <thead><tr><th>门禁</th><th>检查什么</th><th>谁来确认</th></tr></thead>
+      <tbody>
+        <tr><td><b>uat 验收通过</b></td><td>测试和产品在 uat 上点过</td><td>测试 + 产品</td></tr>
+        <tr><td><b>变更记录</b></td><td>发布内容、影响范围、回滚方式写清楚</td><td>开发自己写</td></tr>
+        <tr><td><b>回滚方案确认</b></td><td>出问题能不能 5 分钟内回退</td><td>开发 + 运维</td></tr>
+        <tr><td><b>运维审批</b></td><td>通知运维发 prod，确认窗口</td><td>运维</td></tr>
+        <tr><td><b>发布后观察</b></td><td>盯 30 分钟错误率 / 核心指标</td><td>开发自己盯</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tip">
+    <b>落地节奏：</b>现在已经有的是"Lint + 单测硬阻断"。下一步先把<b>覆盖率阈值</b>和<b>依赖漏洞扫描</b>加进 CI（先 warn 观察两周，再转硬阻断）。review 人数要求在 Codeup 分支保护里直接配，不用写代码。
+  </div>
+</section>
+
+<!-- ===== 一次需求上线 SOP ===== -->
+<section id="sop">
+  <h2><span class="num">06</span>一次需求从开发到上线的完整 SOP</h2>
+  <p class="section-lead">新人入职第一个需求，照着这张清单一步步走，不会错。先看谁做什么、再看时间顺序。</p>
+
+  <h3>RACI 责任矩阵：每件事谁负责</h3>
+  <div class="table-wrap">
+    <table>
+      <colgroup><col style="width:26%"><col style="width:14%"><col style="width:14%"><col style="width:14%"><col style="width:14%"><col style="width:18%"></colgroup>
+      <thead><tr>
+        <th>活动</th>
+        <th>开发</th>
+        <th>资深/TL</th>
+        <th>测试</th>
+        <th>产品</th>
+        <th>运维</th>
+      </tr></thead>
+      <tbody>
+        <tr><td>写 plan.md / 技术方案</td><td style="color:#b91c1c;font-weight:700">R</td><td style="color:#b45309;font-weight:700">A</td><td>C</td><td>C</td><td>I</td></tr>
+        <tr><td>写代码（AI Agent 辅助）</td><td style="color:#b91c1c;font-weight:700">R</td><td>I</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td>PR Review</td><td>—</td><td style="color:#b91c1c;font-weight:700">R/A</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr><td>dev 环境验证</td><td style="color:#b91c1c;font-weight:700">R/A</td><td>—</td><td>—</td><td>—</td><td>I</td></tr>
+        <tr><td>部署 uat</td><td>—</td><td>—</td><td>—</td><td>—</td><td style="color:#b91c1c;font-weight:700">R/A</td></tr>
+        <tr><td>uat 验收</td><td>C</td><td>I</td><td style="color:#b91c1c;font-weight:700">R</td><td style="color:#b91c1c;font-weight:700">R</td><td>—</td></tr>
+        <tr><td>部署 prod</td><td>—</td><td>—</td><td>—</td><td>—</td><td style="color:#b91c1c;font-weight:700">R/A</td></tr>
+        <tr><td>prod 上线观察</td><td style="color:#b91c1c;font-weight:700">R/A</td><td>C</td><td>—</td><td>I</td><td>I</td></tr>
+        <tr><td>生产回滚</td><td>C</td><td style="color:#b45309;font-weight:700">A</td><td>—</td><td>—</td><td style="color:#b91c1c;font-weight:700">R</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:12px;color:#888;margin-bottom:20px;">R = 执行负责 &nbsp; A = 最终负责 &nbsp; C = 需要咨询 &nbsp; I = 知会 &nbsp; — = 不参与</p>
+
+  <h3>一次需求的时序图</h3>
+  <div class="flow">
+    <svg viewBox="0 0 860 320" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif" font-size="11">
+      <!-- 泳道标题 -->
+      <rect x="10" y="10" width="150" height="28" fill="#f0fdfa" stroke="#0f766e"/>
+      <text x="85" y="28" text-anchor="middle" font-weight="700" fill="#0f766e">开发</text>
+      <rect x="170" y="10" width="150" height="28" fill="#eff6ff" stroke="#1d4ed8"/>
+      <text x="245" y="28" text-anchor="middle" font-weight="700" fill="#1d4ed8">Codeup CI</text>
+      <rect x="330" y="10" width="150" height="28" fill="#fff7ed" stroke="#b45309"/>
+      <text x="405" y="28" text-anchor="middle" font-weight="700" fill="#b45309">资深/TL</text>
+      <rect x="490" y="10" width="150" height="28" fill="#fef2f2" stroke="#b91c1c"/>
+      <text x="565" y="28" text-anchor="middle" font-weight="700" fill="#b91c1c">运维</text>
+      <rect x="650" y="10" width="190" height="28" fill="#f5f5f4" stroke="#78716c"/>
+      <text x="745" y="28" text-anchor="middle" font-weight="700" fill="#44403c">测试/产品</text>
+
+      <!-- 泳道竖线 -->
+      <line x1="85" y1="38" x2="85" y2="310" stroke="#0f766e" stroke-dasharray="3,3" opacity="0.3"/>
+      <line x1="245" y1="38" x2="245" y2="310" stroke="#1d4ed8" stroke-dasharray="3,3" opacity="0.3"/>
+      <line x1="405" y1="38" x2="405" y2="310" stroke="#b45309" stroke-dasharray="3,3" opacity="0.3"/>
+      <line x1="565" y1="38" x2="565" y2="310" stroke="#b91c1c" stroke-dasharray="3,3" opacity="0.3"/>
+      <line x1="745" y1="38" x2="745" y2="310" stroke="#78716c" stroke-dasharray="3,3" opacity="0.3"/>
+
+      <!-- 步骤 -->
+      <!-- 1. 开发写代码 -->
+      <rect x="35" y="55" width="100" height="24" rx="4" fill="#0f766e"/>
+      <text x="85" y="71" text-anchor="middle" fill="white" font-weight="600">写代码+单测</text>
+      <text x="35" y="92" font-size="10" fill="#666">Agent 辅助，本地跑通</text>
+
+      <!-- 2. 提 PR -->
+      <rect x="35" y="105" width="100" height="24" rx="4" fill="#0f766e"/>
+      <text x="85" y="121" text-anchor="middle" fill="white" font-weight="600">提 PR→develop</text>
+
+      <!-- 3. CI 跑 -->
+      <rect x="195" y="105" width="100" height="24" rx="4" fill="#1d4ed8"/>
+      <text x="245" y="121" text-anchor="middle" fill="white" font-weight="600">Lint+单测</text>
+      <line x1="135" y1="117" x2="195" y2="117" stroke="#888" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+      <!-- 4. Review -->
+      <rect x="355" y="105" width="100" height="24" rx="4" fill="#b45309"/>
+      <text x="405" y="121" text-anchor="middle" fill="white" font-weight="600">Review</text>
+      <line x1="295" y1="117" x2="355" y2="117" stroke="#888" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+      <!-- 5. 合并 develop → 自动 dev -->
+      <rect x="35" y="155" width="100" height="24" rx="4" fill="#0f766e"/>
+      <text x="85" y="171" text-anchor="middle" fill="white" font-weight="600">合并 develop</text>
+      <line x1="405" y1="129" x2="405" y2="145" stroke="#888" stroke-width="1.5"/>
+      <line x1="405" y1="145" x2="85" y2="145" stroke="#888" stroke-width="1.5" marker-end="url(#arr2)"/>
+      <text x="245" y="142" text-anchor="middle" font-size="10" fill="#666">dev 自动部署</text>
+
+      <!-- 6. dev 验证 -->
+      <text x="35" y="195" font-size="11" fill="#0f766e" font-weight="600">↓ dev 环境自测通过</text>
+
+      <!-- 7. 切 release -->
+      <rect x="35" y="210" width="100" height="24" rx="4" fill="#0f766e"/>
+      <text x="85" y="226" text-anchor="middle" fill="white" font-weight="600">切 release 分支</text>
+
+      <!-- 8. 运维发 uat -->
+      <rect x="515" y="210" width="100" height="24" rx="4" fill="#b91c1c"/>
+      <text x="565" y="226" text-anchor="middle" fill="white" font-weight="600">部署 uat</text>
+      <line x1="135" y1="222" x2="515" y2="222" stroke="#888" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr2)"/>
+
+      <!-- 9. 测试产品验收 -->
+      <rect x="695" y="210" width="100" height="24" rx="4" fill="#78716c"/>
+      <text x="745" y="226" text-anchor="middle" fill="white" font-weight="600">uat 验收</text>
+      <line x1="615" y1="222" x2="695" y2="222" stroke="#888" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+      <!-- 10. PR release→main -->
+      <rect x="35" y="255" width="100" height="24" rx="4" fill="#0f766e"/>
+      <text x="85" y="271" text-anchor="middle" fill="white" font-weight="600">PR→main 打标签</text>
+      <line x1="745" y1="234" x2="745" y2="267" stroke="#888" stroke-width="1.5"/>
+      <line x1="745" y1="267" x2="135" y2="267" stroke="#888" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr2)"/>
+
+      <!-- 11. 运维发 prod -->
+      <rect x="515" y="255" width="100" height="24" rx="4" fill="#b91c1c"/>
+      <text x="565" y="271" text-anchor="middle" fill="white" font-weight="600">部署 prod</text>
+      <line x1="135" y1="267" x2="515" y2="267" stroke="#888" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+      <!-- 12. 开发盯监控 + 合回 develop -->
+      <rect x="35" y="285" width="100" height="22" rx="4" fill="#0f766e"/>
+      <text x="85" y="300" text-anchor="middle" fill="white" font-weight="600">盯30min+合回develop</text>
+
+      <defs><marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#888"/></marker></defs>
+    </svg>
+  </div>
+
+  <div class="timeline">
+    <div class="tl-row">
+      <div class="tl-time">第 1 步</div>
+      <div class="tl-axis"><div class="tl-dot"></div><div class="tl-line"></div></div>
+      <div class="tl-content">
+        <div class="tl-title">写 plan.md</div>
+        <div class="tl-desc">用 Agent 帮你起草，自己改到"陌生人能照做"。涉及数据库变更必须写回滚脚本。</div>
+      </div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-time">第 2 步</div>
+      <div class="tl-axis"><div class="tl-dot"></div><div class="tl-line"></div></div>
+      <div class="tl-content">
+        <div class="tl-title">切 feature 分支</div>
+        <div class="tl-desc">从 develop 切出 <code>feature/xxx</code>，用 Agent Plan Mode 开发。一次做一个小改动，跑通再继续。</div>
+      </div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-time">第 3 步</div>
+      <div class="tl-axis"><div class="tl-dot"></div><div class="tl-line"></div></div>
+      <div class="tl-content">
+        <div class="tl-title">提 PR 到 develop</div>
+        <div class="tl-desc">本地 lint + 单测全绿再提。PR 描述里贴 plan.md 要点。等资深 review。</div>
+      </div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-time">第 4 步</div>
+      <div class="tl-axis"><div class="tl-dot"></div><div class="tl-line"></div></div>
+      <div class="tl-content">
+        <div class="tl-title">合并到 develop，dev 验证</div>
+        <div class="tl-desc">Codeup 自动部署 dev。自己在 dev 环境过一遍功能。</div>
+      </div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-time">第 5 步</div>
+      <div class="tl-axis"><div class="tl-dot"></div><div class="tl-line"></div></div>
+      <div class="tl-content">
+        <div class="tl-title">切 release，发 uat</div>
+        <div class="tl-desc">从 develop 切 <code>release/x.x.x</code>，通知运维部署到 uat。配合测试和产品验收。</div>
+      </div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-time">第 6 步</div>
+      <div class="tl-axis"><div class="tl-dot"></div><div class="tl-line"></div></div>
+      <div class="tl-content">
+        <div class="tl-title">合 main，发 prod</div>
+        <div class="tl-desc">uat 通过后提 PR 合 main，打标签。通知运维发生产。发布后盯 30 分钟监控。</div>
+      </div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-time">第 7 步</div>
+      <div class="tl-axis"><div class="tl-dot"></div></div>
+      <div class="tl-content">
+        <div class="tl-title">合回 develop</div>
+        <div class="tl-desc">线上确认没问题后，把 release 合回 develop。收尾。</div>
+        <span class="tl-tag">完成</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 路线图 ===== -->
+<section id="roadmap">
+  <h2><span class="num">07</span>团队接下来的落地路线</h2>
+  <p class="section-lead">现状已经有 Codeup 流水线和硬门禁，下一步按这个顺序补：</p>
+
+  <h3>第一个试点怎么选？</h3>
+  <p style="font-size:14px;color:var(--text-2);margin-bottom:10px;">不要上来就动支付核心。试点选对了，团队有信心；选错了，翻车一次就推不动了。按这个原则挑：</p>
+  <div class="table-wrap">
+    <table>
+      <colgroup><col style="width:30%"><col style="width:70%"></colgroup>
+      <thead><tr><th>维度</th><th>选什么样的</th></tr></thead>
+      <tbody>
+        <tr><td><b>复杂度</b></td><td>中等——不是 CRUD 太简单（看不出 AI 价值），也不是核心交易链路（翻车代价大）</td></tr>
+        <tr><td><b>失败代价</b></td><td>出错不影响钱、不影响用户，最多内部功能不好用</td></tr>
+        <tr><td><b>代码质量</b></td><td>已有测试覆盖、文档还可以——不然 Agent 在屎山上写代码，你 review 都看不懂</td></tr>
+        <tr><td><b>owner</b></td><td>找一个愿意试、心态开放的工程师当种子用户，别强推</td></tr>
+        <tr><td><b>大小</b></td><td>2-3 周能做完一个完整需求——太快没体感，太慢看不到结果</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid-2" style="margin-top:14px;">
+    <div class="principle" style="border-left:3px solid #0f766e;">
+      <div class="p-num" style="color:#0f766e">推荐</div>
+      <div class="p-title">内部工具 / 后台管理 / 非核心查询</div>
+      <div class="p-desc">逻辑清晰、边界明确、出问题没人哭，适合先跑通流程。</div>
+    </div>
+    <div class="principle" style="border-left:3px solid #b91c1c;">
+      <div class="p-num" style="color:#b91c1c">别碰</div>
+      <div class="p-title">支付核心 / 资金结算 / 对外接口</div>
+      <div class="p-desc">等流程跑顺、团队有体感了再上，不拿生产事故做教学。</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="principle">
+      <div class="p-num">现阶段（已具备）</div>
+      <div class="p-title">✓ AI Agent 编码 · Lint+单测硬门禁 · Git Flow · Codeup 流水线 · PR 人审</div>
+      <div class="p-desc">基础已经有了，先把手流程走顺。</div>
+    </div>
+    <div class="principle">
+      <div class="p-num">下一步（3 个月内）</div>
+      <div class="p-title">AGENTS.md 标准化 + plan.md 流程 + 类型检查硬门禁</div>
+      <div class="p-desc">每个仓库补 AGENTS.md；新需求先走 plan；CI 里把类型检查和覆盖率也加上硬门禁。</div>
+    </div>
+    <div class="principle">
+      <div class="p-num">中期（6 个月）</div>
+      <div class="p-title">AI PR Review 辅助 + Feature Flag</div>
+      <div class="p-desc">2 个 reviewer 扛 30 人团队会瓶颈，引入 AI 先过一遍机械性问题；交易链路逐步上 Feature Flag 支持灰度。</div>
+    </div>
+    <div class="principle">
+      <div class="p-num">远期</div>
+      <div class="p-title">Canary 发布 + 自动回滚 + 运维闭环</div>
+      <div class="p-desc">现在 uat/prod 都要运维手动发，逐步自动化；错误率超阈值自动回滚。</div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:28px;">怎么度量 AI 真的提效了？</h3>
+  <p style="font-size:14px;color:var(--text-2);margin-bottom:10px;">凭感觉不算。每月看一次这几个指标，对比用 Agent 前后的变化：</p>
+  <div class="table-wrap">
+    <table>
+      <colgroup><col style="width:25%"><col style="width:45%"><col style="width:30%"></colgroup>
+      <thead><tr><th>指标</th><th>看什么</th><th>目标方向</th></tr></thead>
+      <tbody>
+        <tr><td><b>PR 周期</b></td><td>从提 PR 到合并的时间</td><td>变短</td></tr>
+        <tr><td><b>返工率</b></td><td>PR 被打回改超过 2 次的比例</td><td>下降</td></tr>
+        <tr><td><b>生产 bug 数</b></td><td>合并后 1 周内提 bug 的数量</td><td>不上升（这是底线）</td></tr>
+        <tr><td><b>人 review 时长</b></td><td>一个 PR review 平均花多少分钟</td><td>不应该变长</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:13px;color:var(--text-3);margin-top:6px;"><b>基线怎么建：</b>用 Agent 之前 3 个月的 git 历史数据算出来，每月对比看趋势。第一个月别期待太大，看方向不看绝对值。</p>
+
+  <h3 style="margin-top:24px;">技术债分级偿还</h3>
+  <div class="table-wrap">
+    <table>
+      <colgroup><col style="width:20%"><col style="width:40%"><col style="width:40%"></colgroup>
+      <thead><tr><th>级别</th><th>什么样的债</th><th>什么时候还</th></tr></thead>
+      <tbody>
+        <tr><td><b>红色（必须现在还）</b></td><td>影响交易正确性、有安全风险、阻塞别人开发</td><td>下个迭代必须还，不许拖</td></tr>
+        <tr><td><b>黄色（计划还）</b></td><td>代码丑、重复、性能小问题、缺注释</td><td>排进季度规划，跟着需求一起还</td></tr>
+        <tr><td><b>绿色（记录但不急）</b></td><td>命名不优雅、小重构机会</td><td>写到 TODO，下次碰这块代码时顺手还</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="margin-top:28px;">新人第一天 Checklist</h3>
+  <div class="table-wrap">
+    <table>
+      <colgroup><col style="width:15%"><col style="width:85%"></colgroup>
+      <thead><tr><th>顺序</th><th>做什么</th></tr></thead>
+      <tbody>
+        <tr><td><b>1</b></td><td>读这份手册全文（30 分钟），重点看 Git Flow 分支映射和硬门禁</td></tr>
+        <tr><td><b>2</b></td><td>装环境：JDK 17、Maven、本地 MySQL/Redis、Codeup 账号、Agent 工具</td></tr>
+        <tr><td><b>3</b></td><td>clone 主仓库，读 <code>AGENTS.md</code> 和 <code>docs/</code> 目录下的业务文档</td></tr>
+        <tr><td><b>4</b></td><td>跑通 <code>mvn clean package</code> + 本地起服务，确认能打开首页</td></tr>
+        <tr><td><b>5</b></td><td>找你的 buddy（指定带你的资深工程师），选一个小需求开始第一个 PR</td></tr>
+        <tr><td><b>6</b></td><td>第一个 PR 不要用 Agent——手动写，理解清楚流程后再用</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+  <h2><span class="num">08</span>Review AI Agent 产出时重点盯这些</h2>
+  <p class="section-lead">除了常规代码质量，AI Agent 生成的代码有几个特有的危险信号，review 时重点看：</p>
+
+  <div class="tip" style="margin:10px 0 16px;">
+    <b>PR 必须附 Prompt 记录：</b>每个 PR 描述里附一段脱敏的 Prompt 对话摘要——看你是真花心思拆解问题、跟 Agent 来回推敲，还是扔一句"帮我修了"加一张报错截图。前者是真思考，后者是批量生成的垃圾。
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <colgroup><col style="width:32%"><col style="width:68%"></colgroup>
+      <thead><tr><th>信号</th><th>为什么危险</th></tr></thead>
+      <tbody>
+        <tr><td><b>删测试 / 跳过测试</b></td><td>为了让 CI 绿而删掉暴露问题的测试</td></tr>
+        <tr><td><b>重复造已有轮子</b></td><td>Agent 没检索到仓库已有实现，写了个重复的</td></tr>
+        <tr><td><b>一次 PR 跨多个模块</b></td><td>违反小批量原则，review 难度指数上升</td></tr>
+        <tr><td><b>新引入未在 AGENTS.md 评估的依赖</b></td><td>可能违反许可证或安全要求</td></tr>
+        <tr><td><b>diff 偏离 plan.md</b></td><td>没记录的设计变更，要问为什么</td></tr>
+        <tr><td><b>循环里调 RPC / DB</b></td><td>性能大坑，AI Agent 常犯</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="tip" style="margin-top:20px;">
+    <b>一句话记住：</b>AI Agent 是你的高级实习生——它写得快、愿意干活，但你必须 review 每一行。交易链路不相信"AI 写的应该没问题"。
+  </div>
+</section>
+
+</main>
+</div>
+
+<footer>
+  <div style="max-width:var(--max);margin:0 auto;padding:0 24px;">
+    <p><b>参考来源</b></p>
+    <p>Anthropic《The AI-Native SDLC Playbook》· oh my pi (omp) 官方文档 · Google DORA 2025 · 团队现状调研（2026-10）</p>
+  </div>
+</footer>
+
+<script>
+window.addEventListener('scroll',function(){
+  var h=document.documentElement;
+  document.getElementById('progress').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';
+});
+var sections=document.querySelectorAll('section[id], div.stage-block[id]');
+var links=document.querySelectorAll('.toc a');
+window.addEventListener('scroll',function(){
+  var pos=window.scrollY+100;var active=null;
+  sections.forEach(function(s){if(s.offsetTop<=pos)active=s});
+  if(active){links.forEach(function(l){l.classList.remove('active')});var act=document.querySelector('.toc a[href="#'+active.id+'"]');if(act)act.classList.add('active')}
+});
+</script>
+</body>
+</html>
