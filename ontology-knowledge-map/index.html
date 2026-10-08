@@ -523,6 +523,19 @@ footer .f-src{display:inline-flex;flex-wrap:wrap;gap:6px 14px;justify-content:ce
   *{animation:none!important;transition:none!important}
   html{scroll-behavior:auto}
 }
+/* ===== 前沿更新视图 ===== */
+.upd-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px}
+.upd-card{background:var(--bg-1);border:1px solid var(--line);border-radius:14px;padding:16px 17px;display:flex;flex-direction:column;gap:8px}
+.upd-card .u-date{font-size:11px;color:var(--gold);letter-spacing:.05em}
+.upd-card h4{margin:0;font-size:14.5px;line-height:1.5;color:var(--tx-1)}
+.upd-card p{margin:0;font-size:12.5px;line-height:1.75;color:var(--tx-2)}
+.upd-card .u-src{font-size:11.5px;color:var(--tx-3);margin-top:auto;padding-top:6px;border-top:1px dashed var(--line)}
+.upd-card .u-src a{color:var(--acc);text-decoration:none;word-break:break-all}
+.upd-sec .sec-head{margin-bottom:14px}
+.upd-note{background:rgba(55,200,171,.08);border:1px solid rgba(55,200,171,.3);border-radius:12px;padding:12px 16px;font-size:13px;color:var(--tx-2);line-height:1.75;margin-bottom:24px}
+@media (max-width:900px){.upd-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:600px){.upd-grid{grid-template-columns:1fr}
+  .upd-card p{font-size:13.5px}.upd-card h4{font-size:15px}.upd-note{font-size:13.5px}}
 </style>
 </head>
 <body>
@@ -538,6 +551,7 @@ footer .f-src{display:inline-flex;flex-wrap:wrap;gap:6px 14px;justify-content:ce
     <button type="button" data-view="chapters">十章全景</button>
     <button type="button" data-view="mechanisms">核心机制</button>
     <button type="button" data-view="governance">落地与治理</button>
+    <button type="button" data-view="updates">前沿更新</button>
   </nav>
   <div class="searchbox" id="searchBox">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
@@ -681,6 +695,14 @@ footer .f-src{display:inline-flex;flex-wrap:wrap;gap:6px 14px;justify-content:ce
     </div>
   </div>
 
+  <div class="update-banner" data-goto="updates" style="cursor:pointer;display:flex;gap:12px;align-items:flex-start;background:linear-gradient(135deg,rgba(255,214,102,.10),rgba(255,214,102,.03));border:1px solid rgba(255,214,102,.35);border-radius:14px;padding:14px 18px;margin-bottom:26px">
+    <span style="flex:none;background:rgba(255,214,102,.16);color:#FFD666;border:1px solid rgba(255,214,102,.5);border-radius:8px;padding:3px 10px;font-size:12px;font-weight:700;margin-top:2px">2026·新增</span>
+    <div>
+      <b style="color:var(--tx-1)">本书出版（2026.05）后 AI 技术有新进展</b>
+      <p style="margin:4px 0 0;font-size:13.5px;color:var(--tx-2);line-height:1.7">新增「前沿更新」视图：覆盖模型层（GPT-6 / 常驻智能体）、知识层（GraphRAG 与本体工程工具化）、治理层（数据资产国家标准）三大板块。所有补充内容均带「2026·新增」标记并注明来源，点击查看 →</p>
+    </div>
+  </div>
+
   <div class="sec-head">
     <span class="kicker">GET STARTED</span>
     <h2>下一步</h2>
@@ -689,7 +711,7 @@ footer .f-src{display:inline-flex;flex-wrap:wrap;gap:6px 14px;justify-content:ce
     <button class="chip" data-goto="map" style="align-items:flex-start;flex-direction:column;gap:6px;max-width:none">
       <span class="ch-n num" style="width:auto;height:auto;padding:4px 10px;border-radius:999px">图谱</span>
       <span class="ch-t" style="font-size:14px;white-space:normal">探索概念关系网络</span>
-      <span class="ch-d" style="white-space:normal;max-width:none">68个核心概念、9大主题域的关联关系，点击节点查看书中出处。</span>
+      <span class="ch-d" style="white-space:normal;max-width:none">73个核心概念（含6个2026新增）、9大主题域的关联关系，点击节点查看书中出处。</span>
     </button>
     <button class="chip" data-goto="mechanisms" style="align-items:flex-start;flex-direction:column;gap:6px;max-width:none">
       <span class="ch-n num" style="width:auto;height:auto;padding:4px 10px;border-radius:999px;background:rgba(79,163,255,.14);color:#7FB2FF;border-color:rgba(79,163,255,.35)">机制</span>
@@ -709,7 +731,7 @@ footer .f-src{display:inline-flex;flex-wrap:wrap;gap:6px 14px;justify-content:ce
   <div class="sec-head" style="margin-top:34px">
     <span class="kicker">CONCEPT GRAPH</span>
     <h2>核心概念知识图谱</h2>
-    <span class="note">9大主题 · 68个概念 · 拖拽/缩放/点选下钻 · 图中内容均出自原书</span>
+    <span class="note">9大主题 · 73个概念（含6个2026新增，金色描边）· 拖拽/缩放/点选下钻 · 原书内容+新增标记内容</span>
   </div>
   <div class="map-wrap">
     <div class="map-canvas">
@@ -1279,12 +1301,125 @@ footer .f-src{display:inline-flex;flex-wrap:wrap;gap:6px 14px;justify-content:ce
     </div>
   </div>
 </section>
+
+<!-- VIEW:UPDATES（2026.05 成书后的补充内容，全部带「2026·新增」标记） -->
+<section id="view-updates" class="view">
+  <div class="sec-head" style="margin-top:34px">
+    <span class="kicker">FRONTIER 2026 · SUPPLEMENT</span>
+    <h2>前沿更新：成书后的 AI 新进展</h2>
+    <span class="note">本视图为 2026.05 出版后（至 2026.10）的补充内容 · 非原书 · 均标注「2026·新增」与来源</span>
+  </div>
+
+  <div class="upd-note">
+    本书《本体驱动的AI数据管理》于 2026 年 5 月出版。此后数月间，AI 技术沿「模型能力、知识工程、数据制度」三条主线加速演进——其中「本体与知识图谱」正从理念走向云厂商的完整工具链，与本书核心主张高度互证。以下为编者调研整理的补充内容，<b style="color:var(--tx-1)">每条均带「2026·新增」标记、发布日期与可追溯来源</b>；未经验证的传闻未收录。
+  </div>
+
+  <div class="upd-sec">
+    <div class="sec-head">
+      <span class="kicker">MODEL LAYER</span>
+      <h3 style="margin:0">模型层 · 推理深化与常驻智能体</h3>
+    </div>
+    <div class="upd-grid">
+      <div class="upd-card">
+        <span class="u-date">2026·新增 · 2026-09/10</span>
+        <h4>GPT-6 系列与常驻智能体 dots</h4>
+        <p>OpenAI 发布 GPT-6（Sol/Luna）并推出由 GPT-6 Astra 驱动的常驻型 Agent「dots」：每个 dot 拥有独立云电脑、可持续值守长周期任务——Agent 从「对话助手」走向「常驻工作单元」，印证书中「智能体=超级伙伴」的演进判断。</p>
+        <span class="u-src">来源：<a href="https://www.marktechpost.com/category/technology/artificial-intelligence/ai-infrastructure/">marktechpost.com</a> · 2026-09/10</span>
+      </div>
+      <div class="upd-card">
+        <span class="u-date">2026·新增 · 2026-09/10</span>
+        <h4>Claude 5.5 家族 · 自适应思考</h4>
+        <p>Anthropic 推出 Opus 5.5 与 Haiku 5.5：默认 1M token 上下文、思考不可关闭，以 effort 参数（低/中/高/超高/最大）控制推理深度；推理强度可调节的「子智能体」模式进入高频任务——「思考」成为模型原生能力。</p>
+        <span class="u-src">来源：<a href="https://platform.claude.com/docs/en/release-notes/overview">platform.claude.com</a> · 2026-09/10</span>
+      </div>
+      <div class="upd-card">
+        <span class="u-date">2026·新增 · 2026-09/10</span>
+        <h4>开源权重持续演进</h4>
+        <p>DeepSeek-V4.1-Flash（2026-09）、Mistral Large 4（2026-10，开源权重）等相继发布；推理与工具调用能力下放到开源生态，企业自建「私域大模型」的技术门槛进一步降低，与书中「企业私域资产」主张呼应。</p>
+        <span class="u-src">来源：<a href="https://aiflashreport.com/model-releases.html">aiflashreport.com</a> · 2026-09/10</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="upd-sec">
+    <div class="sec-head">
+      <span class="kicker">KNOWLEDGE LAYER</span>
+      <h3 style="margin:0">知识层 · 本体与知识图谱进入生产主航道</h3>
+    </div>
+    <div class="upd-grid">
+      <div class="upd-card">
+        <span class="u-date">2026·新增 · 2026-07</span>
+        <h4>本体工程加速器（AWS Context Ontology Accelerator）</h4>
+        <p>Apache 2.0 开源：AI 起草业务本体 → 领域专家逐项审查批准 → 按 W3C 标准存入企业知识图谱 → Agent 经 MCP 消费。将「数月人工本体编写」缩短至「数天」，是「本体驱动 AI」首次获得主流云厂商的完整工具链背书。</p>
+        <span class="u-src">来源：<a href="https://aws.amazon.com/cn/about-aws/whats-new/2026/07/aws-context--ontology-accelarator-generally-available/">aws.amazon.com</a> · 2026-07-31</span>
+      </div>
+      <div class="upd-card">
+        <span class="u-date">2026·新增 · 2026-09</span>
+        <h4>GraphRAG 原生集成（AWS Bedrock + Neptune）</h4>
+        <p>向量+图混合检索正式进入托管服务：自动实体关系抽取 → 图存储 → Leiden 社区摘要 → 混合检索四段流水线。第三方实测多跳实体召回 94.6%（纯向量 RAG 仅 55.4%）、查询延迟约 360ms——本书第 4-7 章的「本体增强推理」路径得到生产级验证。</p>
+        <span class="u-src">来源：<a href="https://dailyaiworld.com/public/blogs/aws-bedrock-adds-graphrag-native-neptune-knowledge-bases">dailyaiworld.com</a> · 2026-09-27</span>
+      </div>
+      <div class="upd-card">
+        <span class="u-date">2026·新增 · 2026-05/10</span>
+        <h4>图谱引擎竞相 Agent 化</h4>
+        <p>Neo4j「Reach」支持 10-100+ 跳遍历并把 Agent 运行痕迹沉淀为机构知识；Microsoft Discovery 内置 GraphRAG（2026-05）；Atlassian 以 MCP 服务器开放 1500 亿连接的 Teamwork Graph 给第三方 Agent——知识图谱成为 Agent 的「语义基座」。</p>
+        <span class="u-src">来源：<a href="https://futurumgroup.com/insights/solving-the-agentic-context-dilemma-inside-neo4js-strategy-to-build-an-operational-world-model/">futurumgroup.com</a> · <a href="https://www.k-ai.ai/en/news/knowledge-graph-vs-vector-rag-neural-semantic-graph/">k-ai.ai</a> · 2026-05/10</span>
+      </div>
+      <div class="upd-card">
+        <span class="u-date">2026·新增 · 2026-05/09</span>
+        <h4>混合检索被定为 2026 基线</h4>
+        <p>微软、Neo4j、Pinecone、Vectara 等相继确认「图+向量」混合是默认架构：向量赢在模糊语义与单跳问答，知识图谱赢在多跳推理、实体消歧、权限与溯源；微软内部基准 GraphRAG 达 86%（向量 RAG 32%）。结论：「差异不再在图引擎，而在你喂给它的本体」。</p>
+        <span class="u-src">来源：<a href="https://www.k-ai.ai/en/news/knowledge-graph-vs-vector-rag-neural-semantic-graph/">k-ai.ai</a> · <a href="https://stage.trantorinc.com/blog/knowledge-graphs-enterprise-ai">trantorinc.com</a> · 2026-05/09</span>
+      </div>
+      <div class="upd-card">
+        <span class="u-date">2026·新增 · 2026-10</span>
+        <h4>统一语义层（Dell × NVIDIA）</h4>
+        <p>Dell 发布 Unified Semantic Layer：为结构化与非结构化数据统一业务定义与术语，让「客户/账户」这类异名同义在 AI 层归一——与书中「语义普通话」「统一结构化」主张同向落地，语义层成为企业 AI 基础设施的标配组件。</p>
+        <span class="u-src">来源：<a href="https://ecosistemastartup.com/dell-amplia-plataforma-de-ia-con-capa-semantica-y-nvidia/">ecosistemastartup.com</a> · 2026-10-06</span>
+      </div>
+      <div class="upd-card">
+        <span class="u-date">2026·新增 · 2026-07</span>
+        <h4>Agent 可审计检索（学术前沿）</h4>
+        <p>arXiv 公开 Agentic GraphRAG 架构：将瑞士官方商业公报转为 500 万+ 节点、470 万+ 关系的知识图谱，Agent 通过意图路由与受限检索完成可审计的注册分析——「可追溯」从原则变成架构约束。</p>
+        <span class="u-src">来源：<a href="https://arxiv.org/html/2605.18770">arxiv.org/2605.18770</a> · 2026-05</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="upd-sec">
+    <div class="sec-head">
+      <span class="kicker">GOVERNANCE LAYER</span>
+      <h3 style="margin:0">治理层 · 数据资产制度化</h3>
+    </div>
+    <div class="upd-grid">
+      <div class="upd-card">
+        <span class="u-date">2026·新增 · 2026-05</span>
+        <h4>《2026年数字经济发展工作要点》</h4>
+        <p>国家数据局印发：8 大重点任务，部署数据要素市场化配置改革、全国一体化算力网，并把「强化数据赋能人工智能」列为专项——高质量数据集、AI 就绪度成为国家级指标。</p>
+        <span class="u-src">来源：<a href="https://www.nda.gov.cn/sjj/ywpd/szjj/0519/20260519194643007508935_pc.html">nda.gov.cn</a> · 2026-05-19</span>
+      </div>
+      <div class="upd-card">
+        <span class="u-date">2026·新增 · 2026-06</span>
+        <h4>《行业高质量数据集建设行动实施方案》</h4>
+        <p>国家数据局印发：以「数据标注+知识工程」提炼行业通识高质量数据集（每行业不少于 5 个）、研发掌握行业技术机理的行业模型——知识工程被写入国家级数据战略，与本书第 5-6 章「知识资产化」路径直接呼应。</p>
+        <span class="u-src">来源：<a href="https://www.nda.gov.cn/sjj/zwgk/zcfb/0608/20260608172117399715004_pc.html">nda.gov.cn</a> · 2026-06-08</span>
+      </div>
+      <div class="upd-card">
+        <span class="u-date">2026·新增 · 2026-07</span>
+        <h4>数据资产两项国家标准发布</h4>
+        <p>国家标准化管理委员会发布《资产管理 数据资产分类与代码》《资产管理 数据资产登记指南》（财政部起草）：数据资产分结构化/半结构化/非结构化 3 类 16 细类，登记覆盖初始/变更/注销三环节——数据资产「入表入账」有了操作指引。</p>
+        <span class="u-src">来源：<a href="http://paper.people.com.cn/rmrb/pc/content/202607/20/content_30169698.html">人民日报</a> · 2026-07-19</span>
+      </div>
+    </div>
+  </div>
+</section>
 </main>
 
 <footer>
   <div class="f-src">
     <span>内容来源：《本体驱动的AI数据管理》（《本体驱动的AI数据管理》编写组 · 机械工业出版社 · 2026.05 · ISBN 9787111810759）</span>
     <span>本页所有概念定义、结构、数字均提炼自原书；标注「示意」的补充内容为编者建议，非书中原文。</span>
+    <span style="color:var(--gold)">标注「2026·新增」的内容为 2026.05 成书后（至 2026.10）编者的调研补充，非原书内容，均已注明发布日期与来源链接。</span>
   </div>
   <div>交互式知识图谱 · 读书辅助工具 · 桌面端建议全屏浏览</div>
 </footer>
@@ -1458,7 +1593,21 @@ const NODES = [
 {id:"n_worldmodel", name:"世界模型", cat:8, chap:"第10.1节", sz:26,
  desc:"企业的「现实引擎与因果镜像」：建模物理规律、环境态势、动态演化与因果链条；与本体模型（逻辑内核与知识契约）协同构成统一认知底座。"},
 {id:"n_duallearn", name:"AI双重学习", cat:8, chap:"第10.1节", sz:24,
- desc:"物理世界学习（万物语义/因果建模/物理直觉）+ 逻辑世界学习（业务语义/决策认知/规则演化），让AI「知行合一」，从「人在环中」走向「AI在企业环中」。"}
+ desc:"物理世界学习（万物语义/因果建模/物理直觉）+ 逻辑世界学习（业务语义/决策认知/规则演化），让AI「知行合一」，从「人在环中」走向「AI在企业环中」。"},
+
+/* ===== 2026年新增补充节点（2026.05 成书后；非原书内容，均标注来源） ===== */
+{id:"n_graphrag", name:"GraphRAG 混合检索", cat:3, chap:"2026·新增", sz:22, n2026:true,
+ desc:"【2026新增】图+向量混合检索成为2026企业基线：2026年9月 AWS Bedrock Knowledge Bases 原生 GraphRAG 正式可用（Neptune+向量检索、Leiden 社区摘要），第三方实测多跳实体召回 94.6%（纯向量 RAG 仅 55.4%）、查询延迟约 360ms；微软/Neo4j/Pinecone/Vectara 等均把混合检索定为 2026 默认架构。"},
+{id:"n_ontoaccel", name:"本体工程加速器", cat:3, chap:"2026·新增", sz:22, n2026:true,
+ desc:"【2026新增】2026年7月 AWS Context Ontology Accelerator（Apache 2.0 开源）：AI 起草业务本体→领域专家逐项审查批准→按 W3C 标准存入企业知识图谱→Agent 通过 MCP 服务器消费；将数月人工本体编写缩短至数天，「本体驱动 AI」首次获得主流云厂商的完整工具链。"},
+{id:"n_semanticlayer", name:"统一语义层", cat:5, chap:"2026·新增", sz:20, n2026:true,
+ desc:"【2026新增】2026年10月 Dell 发布 Unified Semantic Layer（联合 NVIDIA）：为结构化与非结构化数据统一业务定义与术语，使「客户/账户」这类异名同义在 AI 层归一——与书中「语义普通话」「统一结构化」主张同向落地。"},
+{id:"n_persistent", name:"常驻智能体", cat:1, chap:"2026·新增", sz:22, n2026:true,
+ desc:"【2026新增】2026年9-10月 OpenAI 发布 GPT-6 系列并推出 dots：由 GPT-6 Astra 驱动的常驻型 Agent，每个 dot 拥有独立云电脑、可持续值守执行长周期任务——Agent 从「对话助手」走向「常驻工作单元」，印证书中「智能体=超级伙伴」的演进判断。"},
+{id:"n_assetstd", name:"数据资产国家标准", cat:8, chap:"2026·新增", sz:22, n2026:true,
+ desc:"【2026新增】2026年7月国家标准化管理委员会发布《资产管理 数据资产分类与代码》《资产管理 数据资产登记指南》两项国标（财政部起草）：数据资产分结构化/半结构化/非结构化3类16细类，登记覆盖初始/变更/注销三环节，为数据资产入表入账提供操作指引。"},
+{id:"n_datasetaction", name:"高质量数据集行动", cat:8, chap:"2026·新增", sz:20, n2026:true,
+ desc:"【2026新增】2026年5-6月国家数据局印发《2026年数字经济发展工作要点》与《行业高质量数据集建设行动实施方案》：以「数据标注+知识工程」提炼行业通识高质量数据集、支撑行业大模型——知识工程被写入国家级数据战略。"}
 ];
 
 const LINKS = [
@@ -1515,7 +1664,19 @@ const LINKS = [
 ["n_newworld","n_3world","框架"],["n_3world","n_worldmodel","组成·物理"],
 ["n_3world","n_bizonto","组成·逻辑"],["n_3world","n_llm","组成·智能"],
 ["n_worldmodel","n_duallearn","学习目标"],["n_bizonto","n_duallearn","学习目标"],
-["n_6proof","n_act","可信治理"],["n_chain","n_ontoreason","存证支撑"]
+["n_6proof","n_act","可信治理"],["n_chain","n_ontoreason","存证支撑"],
+
+/* ===== 2026新增节点的关系（补充内容） ===== */
+["n_ontoreason","n_graphrag","2026生产化"],
+["n_7plus1","n_ontoaccel","工具化"],
+["n_bizonto","n_ontoaccel","构建加速"],
+["n_mcp","n_ontoaccel","Agent消费"],
+["n_unified","n_semanticlayer","2026呼应"],
+["n_agentic","n_persistent","2026演进"],
+["n_assetmodel","n_assetstd","制度落地"],
+["n_chain","n_assetstd","登记存证"],
+["n_dataset","n_datasetaction","政策驱动"],
+["n_graphrag","n_retrieve","生产级检索"]
 ];
 
 /* 空态快捷入口 */
@@ -1525,17 +1686,23 @@ const NODE_MAP = Object.fromEntries(NODES.map(n=>[n.id,n]));
 /* ============ 图谱渲染与交互 ============ */
 let graphChart = null;
 
+/* 2026新增节点用金色描边与徽标区分 */
+function nodeItem(n){
+  return n.n2026 ? {color:CATS[n.cat].color, borderColor:"#FFD666", borderWidth:2.5,
+                    shadowBlur:10, shadowColor:"rgba(255,214,102,.30)"}
+                 : {color:CATS[n.cat].color};
+}
+function nodeDatum(n, showLabel){
+  return {id:n.id, name:n.name, value:n.name, category:n.cat,
+    symbolSize:n.sz || 20, itemStyle:nodeItem(n), label:{show:showLabel}};
+}
+
 function initGraph(){
   const el = document.getElementById("graphChart");
   if(!el) return;
   graphChart = echarts.init(el, null, {renderer:"canvas"});
   const catData = CATS.map((c,i)=>({name:c.name, itemStyle:{color:c.color}}));
-  const seriesData = NODES.map(n=>({
-    id:n.id, name:n.name, value:n.name, category:n.cat,
-    symbolSize:n.sz || 20,
-    itemStyle:{color:CATS[n.cat].color},
-    label:{show:true}
-  }));
+  const seriesData = NODES.map(n=>nodeDatum(n, true));
   const seriesLinks = LINKS.map(l=>({source:l[0], target:l[1], rel:l[2], value:l[2]}));
   const option = {
     backgroundColor:"transparent",
@@ -1546,7 +1713,8 @@ function initGraph(){
       formatter(p){
         if(p.dataType==="edge") return p.data.rel;
         const n = NODE_MAP[p.data.id];
-        return `<b>${p.name}</b><br><span style="color:#9AA7C4">${n?n.chap:""} · ${CATS[p.data.category].name}</span>`;
+        const tag = n && n.n2026 ? '<span style="display:inline-block;background:rgba(255,214,102,.16);color:#FFD666;border:1px solid rgba(255,214,102,.45);border-radius:6px;padding:0 6px;font-size:11px;margin-right:6px">2026·新增</span>' : "";
+        return `<b>${p.name}</b><br>${tag}<span style="color:#9AA7C4">${n?n.chap:""} · ${CATS[p.data.category].name}</span>`;
       }
     },
     legend:{show:false},
@@ -1591,9 +1759,7 @@ function buildLegend(){
       state[i] = !state[i];
       b.classList.toggle("off", !state[i]);
       graphChart.setOption({
-        series:[{data: NODES.map(n=>({id:n.id, name:n.name, value:n.name, category:n.cat,
-          symbolSize:n.sz||20, itemStyle:{color:CATS[n.cat].color},
-          label:{show:state[n.cat]}}))}]
+        series:[{data: NODES.map(n=>nodeDatum(n, state[n.cat]))}]
       });
     });
     wrap.appendChild(b);
@@ -1628,13 +1794,13 @@ function showNodeDetail(id){
   }).join("");
   const egHtml = n.eg ? `<div class="md-chap" style="color:#8A7BFF;margin-top:10px">书中示例</div><pre style="font-family:var(--font-mono);font-size:11px;color:var(--tx-2);background:rgba(10,15,28,.55);border:1px solid var(--line);border-radius:8px;padding:9px 11px;line-height:1.6;white-space:pre-wrap;overflow-wrap:break-word">${n.eg}</pre>` : "";
   panel.innerHTML = `
-    <div class="md-tag">${CATS[n.cat].name.toUpperCase()}</div>
+    <div class="md-tag">${CATS[n.cat].name.toUpperCase()}${n.n2026?' <span style="background:rgba(255,214,102,.16);color:#FFD666;border:1px solid rgba(255,214,102,.45);border-radius:6px;padding:1px 7px;font-size:10.5px;margin-left:6px">2026·新增</span>':''}</div>
     <div class="md-title">${n.name}</div>
     <div class="md-chap">出处：${n.chap}</div>
     <div class="md-desc">${n.desc}</div>
     ${egHtml}
     <div class="md-rels"><h5>关联概念</h5>${relHtml || "<div style='color:var(--tx-3);font-size:12px'>暂无关联</div>"}</div>
-    <div class="md-foot">点击关联概念可继续下钻 · 内容提炼自原书${n.chap}</div>`;
+    <div class="md-foot">${n.n2026?'本节点为 2026.05 成书后的补充内容（非原书），详情见「前沿更新」视图。':'点击关联概念可继续下钻 · 内容提炼自原书'+n.chap}</div>`;
   panel.querySelectorAll(".md-rels button").forEach(btn=>{
     btn.addEventListener("click", ()=>showNodeDetail(btn.dataset.id));
   });
@@ -1644,7 +1810,7 @@ function showNodeDetail(id){
 <!-- SCRIPTS -->
 <script>
 /* ============ 视图路由 ============ */
-const VIEWS = ["overview","map","chapters","mechanisms","governance"];
+const VIEWS = ["overview","map","chapters","mechanisms","governance","updates"];
 let currentView = "overview";
 
 function goView(name, opt){
