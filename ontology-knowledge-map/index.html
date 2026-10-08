@@ -536,6 +536,16 @@ footer .f-src{display:inline-flex;flex-wrap:wrap;gap:6px 14px;justify-content:ce
 @media (max-width:900px){.upd-grid{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:600px){.upd-grid{grid-template-columns:1fr}
   .upd-card p{font-size:13.5px}.upd-card h4{font-size:15px}.upd-note{font-size:13.5px}}
+/* ===== 四层联动：行内「2026·新增」对照条 ===== */
+.upd-inline{display:flex;gap:8px;align-items:flex-start;cursor:pointer;margin:10px 0 0;padding:8px 11px;border-radius:10px;background:rgba(255,214,102,.06);border:1px solid rgba(255,214,102,.28);font-size:12px;line-height:1.65;color:var(--tx-2);transition:border-color .18s,background .18s}
+.upd-inline:hover{border-color:rgba(255,214,102,.55);background:rgba(255,214,102,.10)}
+.upd-inline .u-tag{flex:none;background:rgba(255,214,102,.16);color:#FFD666;border:1px solid rgba(255,214,102,.5);border-radius:6px;padding:1px 7px;font-size:10.5px;font-weight:700;margin-top:1px;white-space:nowrap}
+.upd-inline .u-txt{color:var(--tx-2)}
+.upd-inline .u-txt b{color:#FFD666;font-weight:600}
+.upd-inline .u-go{color:var(--acc);font-size:11px;white-space:nowrap;flex:none;margin-left:auto;align-self:center}
+.upd-sm{padding:6px 9px;font-size:11px;margin-top:7px}
+.upd-sm .u-tag{font-size:10px;padding:0 6px}
+@media (max-width:600px){.upd-inline{font-size:13px}.upd-inline .u-go{display:none}}
 </style>
 </head>
 <body>
@@ -1676,8 +1686,93 @@ const LINKS = [
 ["n_assetmodel","n_assetstd","制度落地"],
 ["n_chain","n_assetstd","登记存证"],
 ["n_dataset","n_datasetaction","政策驱动"],
-["n_graphrag","n_retrieve","生产级检索"]
+["n_graphrag","n_retrieve","生产级检索"],
+["n_persistent","n_5comp","组件印证"],
+["n_persistent","n_superpartner","深化"],
+["n_graphrag","n_enhreason","生产化"],
+["n_graphrag","n_6mode","赋能"],
+["n_ontoaccel","n_dualcheck","同构"],
+["n_ontoaccel","n_jiyong","资产运营"],
+["n_semanticlayer","n_plp","降低集成成本"],
+["n_semanticlayer","n_face","语义映射"],
+["n_assetstd","n_3cat","制度对接"],
+["n_assetstd","n_assetmodel","资产化落地"],
+["n_datasetaction","n_29","知识萃取呼应"],
+["n_datasetaction","n_tacit","隐性知识萃取"]
 ];
+
+/* ============================================================
+   四层联动：章节/机制/命题 ↔ 2026 新进展（全部为补充内容，带「2026·新增」强标记）
+ ============================================================ */
+const UPD = {
+  claim: [
+    "GPT-6 Astra 定位为 computer-use 旗舰、dots 常驻智能体拥有独立云电脑——数据消费者全面机器化（2026-09/10）。",
+    "Dell×NVIDIA 统一语义层与 GraphRAG 多跳推理把「懂业务」工程化（2026-09/10）。",
+    "AWS Context Ontology Accelerator：AI 起草本体→专家审批→W3C 存储→MCP 供 Agent 使用（2026-07）。"
+  ],
+  chap: {
+    1:"GPT-6/dots 常驻智能体印证「智能体=超级伙伴」；开源权重（DeepSeek-V4.1、Mistral Large 4）降低私域模型门槛（2026-09/10）。",
+    2:"数据资产两项国标把「数据资产」制度化（2026-07）；《2026数字经济发展工作要点》设 AI 赋能专项（2026-05）。",
+    3:"Dell 统一语义层印证「统一结构化」（2026-10）；图+向量混合检索成为 DIKW 落地的 2026 基线（2026-09）。",
+    4:"GraphRAG 四段流水线（实体抽取→图存储→社区摘要→混合检索）把「事实-事理-行动」生产化（2026-09）；Agentic GraphRAG 可审计检索架构公开（2026-05）。",
+    5:"AWS Context Ontology Accelerator：AI 起草本体+专家审批+W3C 标准——「7+1」标准语言体系进入云厂商工具链（2026-07）。",
+    6:"高质量数据集行动把「数据标注+知识工程」写入国家级战略，呼应「29句话」知识萃取（2026-06）。",
+    7:"常驻智能体 dots 印证意图-行动闭环（2026-10）；Neo4j Reach 把 Agent 运行痕迹沉淀为机构知识，呼应记忆增强调用（2026-10）。",
+    8:"生产级 GraphRAG（第三方实测多跳召回 94.6%）让六大应用模式获得托管服务支撑（2026-09）。",
+    9:"MCP 生态爆发：Atlassian 以 MCP 开放 1500 亿连接给第三方 Agent（2026-05）；数据资产登记指南呼应「登记存证」（2026-07）。",
+    10:"Neo4j Reach「Learning」把运行痕迹转化为持久知识，印证 AI 双重学习与「建用优复」运营（2026-10）。"
+  },
+  mech: {
+    "M-01":"GraphRAG 四段流水线把「事实→事理→行动」三段式生产化（2026-09）。",
+    "M-02":"图+向量混合检索被微软/Neo4j/Pinecone 等定为 2026 基线，DIKW 双循环获得工具验证（2026-05/09）。",
+    "M-03":"AWS Context Ontology Accelerator：W3C 标准本体+专家审批+MCP 消费，「7+1」语言体系工具化（2026-07）。",
+    "M-04":"高质量数据集行动把「知识萃取」写入国家级数据战略（2026-06）。",
+    "M-05":"Dell 统一语义层降低「面·跨域整合」的集成成本（2026-10）。",
+    "M-06":"常驻智能体 dots 印证意图-行动闭环；Neo4j Reach 沉淀运行痕迹为机构知识（2026-09/10）。",
+    "M-07":"生产级 GraphRAG/语义层让「穿刺验证→小切口→规模化」获得托管服务支撑（2026-09）。"
+  },
+  std: {
+    "n_rdf":"AWS Ontology Accelerator 以 W3C 标准构建本体（2026-07）。",
+    "n_owl":"本体分层约束进入云厂商托管工具链（2026-07）。",
+    "n_skos":"Dell 语义层统一术语，消除异名同义（2026-10）。",
+    "n_swrl":"GraphRAG 社区摘要与规则推理结合（2026-09）。",
+    "n_owls":"OWL-S/MCP 落地：Atlassian 以 MCP 开放协作图给 Agent（2026-05）。",
+    "n_odrl":"数据资产登记指南呼应权限管控与存证（2026-07）。",
+    "n_sparql":"Bedrock GraphRAG 将自然语言编译为图遍历查询（2026-09）。",
+    "n_goaleval":"Agentic GraphRAG 以意图路由实现可审计检索（2026-05）。"
+  }
+};
+
+function mkUpd(txt, small){
+  const d = document.createElement("div");
+  d.className = "upd-inline"+(small?" upd-sm":"");
+  d.innerHTML = `<span class="u-tag">2026·新增</span><span class="u-txt">${txt}</span><span class="u-go">详见 →</span>`;
+  d.addEventListener("click", (e)=>{
+    e.stopPropagation();
+    location.hash = "#/updates";
+  });
+  return d;
+}
+
+function injectUpd(){
+  document.querySelectorAll("#claimChain .claim").forEach((el,i)=>{
+    if(UPD.claim[i]) el.appendChild(mkUpd(UPD.claim[i]));
+  });
+  document.querySelectorAll(".chap").forEach(ch=>{
+    const t = UPD.chap[ch.dataset.chap];
+    if(t && ch.querySelector(".chap-head")) ch.querySelector(".chap-head").after(mkUpd(t));
+  });
+  document.querySelectorAll(".mech").forEach(m=>{
+    const no = m.querySelector(".m-no");
+    if(!no) return;
+    const t = UPD.mech[no.textContent.trim()];
+    if(t) no.closest(".mech-head").after(mkUpd(t));
+  });
+  document.querySelectorAll(".std[data-node]").forEach(s=>{
+    const t = UPD.std[s.dataset.node];
+    if(t) s.appendChild(mkUpd(t, true));
+  });
+}
 
 /* 空态快捷入口 */
 const QUICK_IDS = ["n_bizonto","n_fta","n_7plus1","n_29","n_plp","n_enhreason","n_6proof","n_3world"];
@@ -1923,6 +2018,7 @@ window.addEventListener("load", ()=>{
   } else {
     initGraph();
   }
+  injectUpd();
   parseHash();
 });
 </script>
