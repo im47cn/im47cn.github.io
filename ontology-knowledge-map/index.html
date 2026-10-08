@@ -545,7 +545,10 @@ footer .f-src{display:inline-flex;flex-wrap:wrap;gap:6px 14px;justify-content:ce
 .upd-inline .u-go{color:var(--acc);font-size:11px;white-space:nowrap;flex:none;margin-left:auto;align-self:center}
 .upd-sm{padding:6px 9px;font-size:11px;margin-top:7px}
 .upd-sm .u-tag{font-size:10px;padding:0 6px}
-@media (max-width:600px){.upd-inline{font-size:13px}.upd-inline .u-go{display:none}}
+.mech-go{margin-left:auto;align-self:center;flex:none;background:rgba(79,163,255,.12);color:#7FB2FF;border:1px solid rgba(79,163,255,.4);border-radius:8px;padding:4px 11px;font-size:11.5px;font-weight:600;cursor:pointer;transition:background .18s,border-color .18s;font-family:inherit}
+.mech-go:hover{background:rgba(79,163,255,.22);border-color:rgba(79,163,255,.7)}
+@media (max-width:600px){.upd-inline{font-size:13px}.upd-inline .u-go{display:none}
+  .mech-head{flex-wrap:wrap}.mech-go{margin-left:0}}
 </style>
 </head>
 <body>
@@ -1743,6 +1746,11 @@ const UPD = {
   }
 };
 
+const MECH_NODE = {
+  "M-01":"n_fta","M-02":"n_dikw","M-04":"n_29",
+  "M-05":"n_plp","M-06":"n_enhreason","M-07":"n_pierce"
+};
+
 function mkUpd(txt, small){
   const d = document.createElement("div");
   d.className = "upd-inline"+(small?" upd-sm":"");
@@ -1765,8 +1773,22 @@ function injectUpd(){
   document.querySelectorAll(".mech").forEach(m=>{
     const no = m.querySelector(".m-no");
     if(!no) return;
+    const head = no.closest(".mech-head");
     const t = UPD.mech[no.textContent.trim()];
-    if(t) no.closest(".mech-head").after(mkUpd(t));
+    if(t) head.after(mkUpd(t));
+    const nd = MECH_NODE[no.textContent.trim()];
+    if(nd){
+      const g = document.createElement("button");
+      g.type = "button";
+      g.className = "mech-go";
+      g.textContent = "图谱详解 →";
+      g.addEventListener("click", (e)=>{
+        e.stopPropagation();
+        location.hash = "#/map";
+        setTimeout(()=>{ if(typeof showNodeDetail === "function") showNodeDetail(nd); }, 120);
+      });
+      head.appendChild(g);
+    }
   });
   document.querySelectorAll(".std[data-node]").forEach(s=>{
     const t = UPD.std[s.dataset.node];
