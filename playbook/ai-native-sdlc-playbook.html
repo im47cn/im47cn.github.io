@@ -164,7 +164,7 @@ footer{border-top:1px solid var(--border);padding:28px 0;margin-top:40px;color:v
 <main>
 
 <div class="hero">
-  <div class="eyebrow">ENGINEERING PLAYBOOK · v2.0 · 开放平台事业部</div>
+  <div class="eyebrow">ENGINEERING PLAYBOOK · v2.1 · 开放平台事业部</div>
   <h1>AI 时代的开发流程，<br/><span class="accent">从需求到上线</span> 全周期指南</h1>
   <p class="lead">
     这份手册给团队所有工程师：我们如何用 AI Agent（终端编码助手）做需求、设计、编码、测试和发布。
@@ -318,12 +318,13 @@ footer{border-top:1px solid var(--border);padding:28px 0;margin-top:40px;color:v
               <li>独立任务用 worktree 隔离（见 Build 章节）</li>
               <li>同一需求内的子任务用 Subagents 并行</li>
               <li>输出都走 git diff，人来统一把关</li>
+              <li>允许 Agent 相互 review（子 Agent 复核、陌生人 Reviewer，见 Build 章节）</li>
             </ul>
           </td>
           <td>
             <ul style="padding-left:16px;margin:0;">
               <li>不让两个 Agent 在同一目录同时改</li>
-              <li>不让 Agent 互相 review 对方的代码</li>
+              <li>Agent 互审结论不得越过各项目定义的人审范围——每个项目在 AGENTS.md 中显式定义：哪些路径必须人审、哪些非核心修改可由 Agent review 替代人审直接合并</li>
             </ul>
           </td>
         </tr>
@@ -353,7 +354,7 @@ footer{border-top:1px solid var(--border);padding:28px 0;margin-top:40px;color:v
           <td><b>架构师</b></td>
           <td>
             <ul style="padding-left:16px;margin:0;">
-              <li>写 <code>intent.md</code>（技术侧）/ <code>spec.md</code>：技术方案、接口契约、数据模型</li>
+              <li>写 <code>spec.md</code>：技术方案、接口契约、数据模型（技术侧意图并入 spec，不另写 intent）</li>
               <li>架构决策、技术债务取舍、复杂方案设计</li>
               <li>跨模块契约对齐</li>
             </ul>
@@ -376,8 +377,9 @@ footer{border-top:1px solid var(--border);padding:28px 0;margin-top:40px;color:v
           <td>
             <ul style="padding-left:16px;margin:0;">
               <li><b>评测集（Evals）完备性兜底</b>：核心链路 20-50 个评测用例由测试维护</li>
-              <li>线上 bug 转评测用例、回归验证</li>
+              <li>线上 bug 转评测用例、回归验证；连续 6 个月未捕获差异且业务已下线的用例，评测集 owner 可 PR 退役并留痕</li>
               <li>核心场景测试人工审核（Agent 写的测试可能"为了绿而绿"）</li>
+              <li>转型锚点（TL 维护）：当前测试团队 <code>N</code> 人，从【试点链路】起步建设评测集，季度覆盖 <code>M</code> 条核心链路</li>
             </ul>
           </td>
           <td>不重复开发自己跑一遍所有测试——把精力放在评测集建设和人工审核上</td>
@@ -496,6 +498,7 @@ footer{border-top:1px solid var(--border);padding:28px 0;margin-top:40px;color:v
           <tr><td><b>feature 分支更新代码</b></td><td><code>git rebase develop</code></td><td>保持提交历史线性，PR 干净</td></tr>
           <tr><td><b>feature 合回 develop</b></td><td><b>PR Merge（不 rebase）</b></td><td>保留合并节点，可追溯这次发布包含哪些 feature</td></tr>
           <tr><td><b>release 合回 main</b></td><td><b>PR Merge</b></td><td>打版本标签，保留发布节点</td></tr>
+          <tr><td><b>release 上的 bug fix</b></td><td><b>直接在 release 分支提交</b>，不走 feature 分支</td><td>uat 验证对象 = 发布对象；随 release → develop 回合带回 develop，不允许只存在于 release 的提交</td></tr>
           <tr><td><b>hotfix 合回 main</b></td><td><b>PR Merge</b></td><td>紧急修复也要留痕</td></tr>
         </tbody>
       </table>
@@ -573,7 +576,7 @@ footer{border-top:1px solid var(--border);padding:28px 0;margin-top:40px;color:v
       <ul style="padding-left:18px;font-size:13.5px;line-height:1.8;">
         <li><b>服务不可用</b>（部署后探活失败、进程起不来）→ <b>自动回滚</b>到上一个无问题构建产物</li>
         <li><b>测试脚本失败</b>（验收用例挂了）→ <b>人工介入</b>，由 DRI 决定是否回滚（可能是脚本本身写错了）</li>
-        <li><b>回滚目标</b>：上一个"部署后验证通过"的构建产物（制品回滚），不是回退代码分支</li>
+        <li><b>回滚目标</b>：上一个"部署后验证通过"的构建产物（制品回滚），不是回退代码分支。该原则同样适用于 prod（见 Deploy 章节）</li>
         <li><b>回滚后</b>：develop 分支不 revert，标注"dev 验证失败"，让开发重提 PR 修复</li>
       </ul>
 
@@ -601,9 +604,9 @@ footer{border-top:1px solid var(--border);padding:28px 0;margin-top:40px;color:v
       <colgroup><col style="width:15%"><col style="width:22%"><col style="width:28%"><col style="width:35%"></colgroup>
       <thead><tr><th>阶段</th><th>产出物</th><th>谁写 / 谁审批</th><th>过不了怎么办</th></tr></thead>
       <tbody>
-        <tr><td><b>1. Plan</b></td><td><code>intent.md</code></td><td><b>产品经理或架构师写</b>；人（DRI）审批</td><td>没想清楚就别动手，写大白话想法让 AI 追问</td></tr>
-        <tr><td><b>2. Design</b></td><td><code>spec.md</code></td><td><b>架构师、工程师写</b>；产品负责人确认业务还原</td><td>只写"做什么、做成什么样"，不写"怎么做"</td></tr>
-        <tr><td><b>3. Build</b></td><td><code>plan.md</code> + 代码 + 测试</td><td>DRI（工程师）写并自审</td><td>先改文档再改代码，返工成本低</td></tr>
+        <tr><td><b>1. Plan</b></td><td><code>intent.md</code> + <code>plan.md</code></td><td><code>intent.md</code>（业务意图、验收标准）由<b>产品经理主笔</b>、产品负责人审；<code>plan.md</code>（实现计划）由 <b>DRI 写、DRI 审</b></td><td>没想清楚就别动手，写大白话想法让 AI 追问</td></tr>
+        <tr><td><b>2. Design</b></td><td><code>spec.md</code></td><td><b>架构师、工程师写</b>；产品负责人确认业务还原，资深工程师 review 技术方案</td><td>只写"做什么、做成什么样"，不写"怎么做"</td></tr>
+        <tr><td><b>3. Build</b></td><td>代码 + 测试（实现按 <code>plan.md</code> 执行）</td><td>DRI（工程师）写并自审</td><td>先改文档再改代码，返工成本低</td></tr>
         <tr><td><b>4. Test</b></td><td><code>Evals</code> 评测集</td><td><b>测试工程师兜底完备性</b>；自动回归</td><td>20-50 个真实任务，掉分禁合并</td></tr>
         <tr><td><b>5. Deploy</b></td><td><code>REVIEW.md</code></td><td>人（DRI）最终审批</td><td>AI 先审查标记问题，Hooks 拦截违规部署</td></tr>
         <tr><td><b>6. Maintain</b></td><td>新 <code>intent.md</code></td><td>AI 诊断 → 人确认</td><td>监控指标异常 → AI 诊断 → 自动回到 Plan 阶段</td></tr>
@@ -622,7 +625,8 @@ footer{border-top:1px solid var(--border);padding:28px 0;margin-top:40px;color:v
     </div>
     <h3>怎么做</h3>
     <ol class="steps">
-      <li>需求开始前，先写一份 <code>plan.md</code>（可以让 Agent 帮你起草，你改）。</li>
+      <li>需求开始前，先确认产品经理提供的 <code>intent.md</code>（业务意图、目标、验收标准）；没有就先补，再动手。</li>
+      <li>DRI 基于意图写 <code>plan.md</code>（可以让 Agent 帮你起草，你改）。</li>
       <li>计划必须包含：目标、非目标、可机器判定的验收标准、涉及哪些模块、有没有数据库变更。</li>
       <li>自己先过一遍"陌生人测试"：没参与讨论的人拿到这个 plan 能直接做吗？不能就补。</li>
       <li>用 Agent 的 <b>Plan Mode</b> 启动，让它先输出实现计划，你确认后再让它写代码。</li>
@@ -654,7 +658,7 @@ footer{border-top:1px solid var(--border);padding:28px 0;margin-top:40px;color:v
 - 如有，回滚脚本：xxx.sql
 
 <span class="key">## 风险</span>
-- 并发取消导致超卖 → 用库存乐观锁解决
+- 风险描述（例：并发取消导致超卖）→ 只登记风险，缓解方案写入 spec.md
 - 回滚方式：feature flag / 回退代码重发</pre>
       </div>
     </details>
@@ -708,18 +712,20 @@ footer{border-top:1px solid var(--border);padding:28px 0;margin-top:40px;color:v
       <li>用 Agent 的 Plan Mode 启动：先让它出计划，你确认后再动手。</li>
       <li>一次只让 Agent 做一个小改动——写完、跑测试、确认，再让它做下一个。</li>
       <li>独立任务（比如写接口 + 写测试）可以用 Subagents 并行，但最后你统一 review。</li>
-      <li>关键决策用 <code>/memory retain</code> 存下来，下次会话不用重新说。</li>
+      <li>关键决策写入<b>项目记忆</b>（omp 用 <code>/memory retain</code>；其他工具用其等价机制，如 CLAUDE.md 追加），下次会话不用重新说。</li>
     </ol>
 
     <h3>AGENTS.md 模板（本团队）</h3>
 <pre><span class="cmt"># 项目：XXX 服务</span>
 技术栈：Java 17 / Spring Boot / MySQL / Redis / Kafka
 
-<span class="cmt"># 常用命令</span>
-- 构建：mvn clean package -DskipTests
-- 测试：mvn test
-- Lint：mvn checkstyle:check
-提交前三个必须全绿。
+<span class="cmt"># 常用命令（与硬门禁清单 ① 本地开发五项一一对应）</span>
+- 格式：mvn spotless:apply
+- 静态检查：mvn checkstyle:check pmd:check spotbugs:check
+- 编译：mvn clean compile
+- 单测（改动模块）：mvn test -Dtest=你改的类
+- 全量测试：mvn test
+提交前五项必须全绿（以本清单为准，与 CI 门禁保持同步）。
 
 <span class="cmt"># 代码规范</span>
 - Controller 只做参数校验和路由，业务逻辑在 Service
@@ -733,12 +739,12 @@ footer{border-top:1px solid var(--border);padding:28px 0;margin-top:40px;color:v
 - 不要在循环里调用 RPC 或数据库查询
 - 所有对外接口必须写参数校验和异常处理</pre>
 
-    <h3>docs 目录：业务知识沉淀（不可变）</h3>
+    <h3>docs 目录：业务知识沉淀（人审受控）</h3>
     <p style="font-size:14px;color:var(--text-2);margin-bottom:8px;">每个项目根目录 <code>docs/</code> 下放业务文档——Agent 懂代码结构，但不懂业务语义。</p>
     <ul style="padding-left:20px;font-size:14px;line-height:1.8;">
-      <li><b>放什么：</b>业务场景说明、状态机、交易规则、接口契约——这些是"不可变文档"，由人维护</li>
+      <li><b>放什么：</b>业务场景说明、状态机、交易规则、接口契约——这些是<b>人审受控文档</b>：只能随代码同 PR 由人更新，<b>Agent 不得自行改写</b>（Agent 是 docs 最重度的消费者，不能既当读者又当作者）</li>
       <li><b>怎么更新：</b>改业务逻辑必须<b>先改 docs 再改代码</b>，同一个 PR。不允许只改代码不改 docs</li>
-      <li><b>多久 review：</b>每季度 DRI 过一遍 docs 是否过时，过期的比没有更危险</li>
+      <li><b>多久 review：</b>每季度 DRI 过一遍 docs 是否过时，过期的比没有更危险。review 落痕：在 <code>docs/REVIEW-LOG.md</code> 追加一行（日期 / DRI / 结论），没记录 = 没做过</li>
     </ul>
 
     <h3>Skills 库（awesome-rules 仓）</h3>
@@ -750,7 +756,7 @@ footer{border-top:1px solid var(--border);padding:28px 0;margin-top:40px;color:v
     </ul>
 
     <details>
-      <summary>展开：当前 Agent 工具命令速查（以 omp 为例）</summary>
+      <summary>展开：当前 Agent 工具命令速查（以 omp 为例，换工具时找等价命令）</summary>
       <div class="detail-body">
         <table style="margin:8px 0;">
           <colgroup><col style="width:30%"><col style="width:70%"></colgroup>
@@ -856,9 +862,9 @@ git worktree remove ../order-B</pre>
       <li>主 Agent 写完代码，唤起空白 Reviewer："帮我把刚才改的代码全盘过一遍"</li>
       <li>Reviewer 挑出问题回传给主 Agent</li>
       <li>主 Agent 辩解或认错修改，改完再提交给 Reviewer</li>
-      <li>来回拉扯最多 10 个回合，直到双方达成一致</li>
+      <li>来回拉扯最多 10 个回合；<b>第 10 回合仍未收敛即升级人裁决</b>，双方意见全文留入 PR 描述，不无限辩论</li>
     </ol>
-    <p style="font-size:13px;color:var(--text-3);margin-top:6px;">虽然要花 1-2 小时，但对抗测试的严苛度远超人工 review。非核心场景可以跳过，核心交易链路必须跑。</p>
+    <p style="font-size:13px;color:var(--text-3);margin-top:6px;">跑与不跑按各项目 AGENTS.md 定义的人审范围执行：定义为核心链路的必须跑，之外可选。成本预期：核心链路 PR 预留 1-2 小时，排进发布节奏。</p>
 
     <div class="antipattern">
       <div class="label">不要这样</div>
@@ -906,10 +912,11 @@ git worktree remove ../order-B</pre>
     <h3>Evals 评测闭环（核心场景）</h3>
     <p style="font-size:14px;color:var(--text-2);margin-bottom:8px;">光靠单测不够——核心链路要维护一个 <b>20-50 个真实任务的评测集</b>，每次代码变更或 Agent 配置变更都自动跑一遍，通过率掉了就禁止合并。</p>
     <ul style="padding-left:20px;font-size:14px;line-height:1.8;">
-      <li><b>同等待遇：</b>代码变更和 Agent 配置变更（CLAUDE.md / Skills / Hooks 改动）一视同仁，都要跑 Evals</li>
+      <li><b>同等待遇（目标态，3 个月内接线）：</b>代码变更和 Agent 配置变更（CLAUDE.md / Skills / Hooks 改动）一视同仁都要跑 Evals——<b>当前 CI 仅代码变更触发</b>，配置变更触发排在 3 个月路线</li>
       <li><b>持续回归：</b>不是提测前才跑，每次 PR 自动跑</li>
-      <li><b>掉分禁合并：</b>通过率比基线低就红，不许强合</li>
+      <li><b>掉分禁合并：</b>通过率比基线低就红，不许强合。基线三条纪律：① 初始基线 = 评测集首次全量跑通率，记录在仓（如 <code>evals/baseline.json</code>）；② 基线<b>只升不降</b>，下调需 PR + Tech Lead approve 并留痕；③ 新用例合入时基线重算为 min(当前通过率, 旧基线)，新用例不得放松旧约束</li>
       <li><b>线上 bug 转 Evals：</b>每次线上修复后，补一个评测用例进集子里，下次自动检测</li>
+      <li><b>用例退役：</b>连续 6 个月未捕获差异且业务已下线的用例，评测集 owner 可 PR 退役并留痕（防止集子只增不减变成新屎山）</li>
     </ul>
 
     <div class="antipattern">
@@ -934,7 +941,7 @@ git worktree remove ../order-B</pre>
     <h3>发布流程（务必照做）</h3>
     <ol class="steps">
       <li><b>develop → dev：</b>PR 合并到 develop 后 Codeup 自动部署 dev，你自己验证。</li>
-      <li><b>切 release：</b>从 develop 切 <code>release/x.x.x</code>，<b>只修 bug，不加新功能</b>。</li>
+      <li><b>切 release：</b>从 develop 切 <code>release/x.x.x</code>，<b>只修 bug，不加新功能</b>。bug fix 一律<b>在 release 分支上直接提交</b>（保持 uat 验证对象 = 发布对象），由该 PR 的 DRI 负责<b>随 release → develop 回合带回 develop</b>——不允许只存在于 release 的提交。</li>
       <li><b>uat 验证：</b>通知运维部署 release 到 uat，测试和产品验收。</li>
       <li><b>合 main：</b>uat 通过后，提 PR 把 release 合到 main，打版本标签。</li>
       <li><b>prod 发布：</b>通知运维部署 main 到生产，发布后盯 30 分钟监控。</li>
@@ -946,8 +953,26 @@ git worktree remove ../order-B</pre>
 
     <h3>紧急回滚怎么做</h3>
     <div class="warn-box">
-      生产出问题时：<b>先找运维回滚旧版本</b>（不用先自己改代码），同时你立刻定位原因。回滚后再走 hotfix 流程修复。不要在 prod 上直接改代码。
+      生产出问题时：<b>先找运维回滚旧版本</b>（不用先自己改代码），同时你立刻定位原因。回滚后再走 hotfix 流程修复（见下方折叠块）。不要在 prod 上直接改代码。
     </div>
+
+    <div class="warn-box">
+      <b>带 DB 变更的回滚顺序（含 DDL 的发布必读）：</b>① 查变更记录确认本次发布是否含 DDL（变更记录必填此项，见硬门禁 ④）；② <b>含 DDL</b>：先停流量/切读 → 运维执行 down 脚本 → 再回滚制品（顺序不能反：旧代码可能起不来，或运行中请求写不进去）；③ <b>不含 DDL</b>：直接制品回滚。down 脚本由运维执行、开发提供并陪同。prod 回滚目标同样是制品（上一个验证通过的构建产物），不是回退代码分支。
+    </div>
+
+    <details>
+      <summary>展开：hotfix 完整流程（生产事故后的修复路径）</summary>
+      <div class="detail-body">
+        <ol class="steps">
+          <li>从 <b>main</b>（回滚后的版本标签）切出 <code>hotfix/x.x.x</code> 分支</li>
+          <li>本地门禁照跑：lint + 单测，<b>不豁免</b></li>
+          <li>提 PR 合回 <b>main</b>。交易链路可以豁免 uat，<b>但不可豁免资深 + TL 双人 review</b>——这是全流程唯一的裁剪点</li>
+          <li>打补丁版本标签，运维发 prod，照常盯 30 分钟监控</li>
+          <li>prod 确认没问题后，<b>PR 合回 develop</b>（与 release → develop 同规则）——不回流 = 下个 release 把已修的 bug 带回生产</li>
+          <li>走「翻车复盘三步闭环」（见 Maintain 章节）</li>
+        </ol>
+      </div>
+    </details>
 
     <h3>哪些路径必须资深 review</h3>
     <div class="table-wrap">
@@ -985,9 +1010,9 @@ git worktree remove ../order-B</pre>
       </div>
     </div>
     <ol class="steps">
-      <li>prod 发布后，自己盯 30 分钟：错误率、核心接口耗时、订单量有没有异常。</li>
-      <li>发现问题先关流量/回滚，再定位原因。</li>
-      <li>踩过的坑（比如某个配置项容易漏、某个边界 case 没想到）用 <code>/memory retain</code> 记下来。</li>
+      <li>prod 发布后，自己盯 30 分钟。判定基准（占位，按实际监控能力校准）：错误率 > 发布前 1 小时基线的 <code>2 倍</code>、核心接口 P99 超基线 <code>30%</code>、订单量低于上周同期 <code>70%</code>，任一命中即触发回滚评估。监控入口：<code>【dashboard 地址/命令待填】</code>。</li>
+      <li>触发权：观察期内 <b>DRI 有权直接呼叫运维回滚，不需要再审批</b>。发现问题先关流量/回滚，再定位原因。</li>
+      <li>踩过的坑（比如某个配置项容易漏、某个边界 case 没想到）写入<b>项目记忆</b>（omp 用 <code>/memory retain</code>；其他工具用等价机制）记下来。</li>
       <li>定期让 Agent 扫描热点路径，提性能优化 PR（这是后面的事，先把手头流程走顺）。</li>
     </ol>
 
@@ -1032,6 +1057,8 @@ git worktree remove ../order-B</pre>
         <tr><td><b>生产数据库</b></td><td>可读不可写；敏感表/敏感字段（用户手机号、身份证、交易密码相关）配置不可访问，Agent 查不到</td></tr>
         <tr><td><b>密钥与凭据</b></td><td>Agent 不能读取配置中心生产密钥；开发环境密钥脱敏后使用</td></tr>
         <tr><td><b>部署权限</b></td><td>Agent 不能触发 uat / prod 部署，只能跑 dev 环境自动流水线</td></tr>
+        <tr><td><b>提交身份</b></td><td>Agent 提交一律使用<b>本人 git 身份</b>，commit message 带 AI 署名标注（如 <code>Co-Authored-By: &lt;agent&gt;</code> trailer）——回溯、缺陷率分桶统计、责任定界都依赖它</td></tr>
+        <tr><td><b>AI 产出标注</b></td><td>PR 标题或标签标明 AI 辅助程度（纯 AI / AI 辅助人写），与 PR 描述里的 Prompt 摘要互相印证</td></tr>
       </tbody>
     </table>
   </div>
@@ -1059,9 +1086,9 @@ git worktree remove ../order-B</pre>
       <tbody>
         <tr><td><b>编译 + Lint</b></td><td>和本地一致，CI 上再跑一遍</td><td style="color:#b91c1c;font-weight:600">硬阻断</td></tr>
         <tr><td><b>单元测试全量</b></td><td>所有单测必须绿</td><td style="color:#b91c1c;font-weight:600">硬阻断</td></tr>
-        <tr><td><b>测试覆盖率</b></td><td>新增代码覆盖率 ≥ 80%，总覆盖率不能比 main 低</td><td style="color:#b45309;font-weight:600">建议先 warn，后硬卡</td></tr>
-        <tr><td><b>依赖漏洞扫描</b></td><td>第三方库有没有已知 CVE</td><td style="color:#b45309;font-weight:600">高危阻断，中危提示</td></tr>
-        <tr><td><b>PR Review</b></td><td>至少 1 人 approve；交易链路 / DB 变更 / 对外接口 = 2 人</td><td style="color:#b91c1c;font-weight:600">硬阻断</td></tr>
+        <tr><td><b>测试覆盖率</b></td><td>新增代码覆盖率 ≥ 80%，总覆盖率不能比 main 低</td><td style="color:#b91c1c;font-weight:600">硬阻断</td></tr>
+        <tr><td><b>依赖漏洞扫描</b></td><td>第三方库有没有已知 CVE</td><td style="color:#b91c1c;font-weight:600">硬阻断（高危与中危均拦）</td></tr>
+        <tr><td><b>PR Review</b></td><td>人审范围<b>按各项目 AGENTS.md 定义</b>：核心路径（交易链路 / DB / 对外接口 / 权限）强制人审，交易链路 = 资深 + TL 双人；非核心修改可由 Agent review 替代人审直接合并</td><td style="color:#b91c1c;font-weight:600">硬阻断</td></tr>
         <tr><td><b>不能 draft 直接合</b></td><td>草稿 PR 必须标记 ready 才能合</td><td style="color:#b91c1c;font-weight:600">硬阻断</td></tr>
         <tr><td><b>commit 规范</b></td><td>commit message 符合规范（feat/fix/refactor 开头）</td><td style="color:#888">建议，暂不硬卡</td></tr>
       </tbody>
@@ -1090,7 +1117,7 @@ git worktree remove ../order-B</pre>
       <tbody>
         <tr><td><b>uat 验收通过</b></td><td>测试和产品在 uat 上点过</td><td>测试 + 产品</td></tr>
         <tr><td><b>变更记录</b></td><td>发布内容、影响范围、回滚方式写清楚</td><td>开发自己写</td></tr>
-        <tr><td><b>回滚方案确认</b></td><td>出问题能不能 5 分钟内回退</td><td>开发 + 运维</td></tr>
+        <tr><td><b>回滚方案确认</b></td><td>出问题能不能 5 分钟内回退；含 DDL 的发布必须<b>演练过 down 脚本</b></td><td>开发 + 运维</td></tr>
         <tr><td><b>运维审批</b></td><td>通知运维发 prod，确认窗口</td><td>运维</td></tr>
         <tr><td><b>发布后观察</b></td><td>盯 30 分钟错误率 / 核心指标</td><td>开发自己盯</td></tr>
       </tbody>
@@ -1098,7 +1125,7 @@ git worktree remove ../order-B</pre>
   </div>
 
   <div class="tip">
-    <b>落地节奏：</b>现在已经有的是"Lint + 单测硬阻断"。下一步先把<b>覆盖率阈值</b>和<b>依赖漏洞扫描</b>加进 CI（先 warn 观察两周，再转硬阻断）。review 人数要求在 Codeup 分支保护里直接配，不用写代码。
+    <b>落地节奏：</b>现在已经有的是"Lint + 单测硬阻断"。<b>覆盖率阈值</b>和<b>依赖漏洞扫描</b>不做 warn 观察期，直接硬拦（pmd / spotbugs 一并配进 CI）。review 人数要求在 Codeup 分支保护里按各项目定义的人审范围配置，不用写代码。
   </div>
 </section>
 
@@ -1120,10 +1147,12 @@ git worktree remove ../order-B</pre>
         <th>运维</th>
       </tr></thead>
       <tbody>
+        <tr><td>写 intent.md（业务意图）</td><td>C</td><td>I</td><td>—</td><td style="color:#b91c1c;font-weight:700">R/A</td><td>—</td></tr>
         <tr><td>写 plan.md / 技术方案</td><td style="color:#b91c1c;font-weight:700">R</td><td style="color:#b45309;font-weight:700">A</td><td>C</td><td>C</td><td>I</td></tr>
         <tr><td>写代码（AI Agent 辅助）</td><td style="color:#b91c1c;font-weight:700">R</td><td>I</td><td>—</td><td>—</td><td>—</td></tr>
         <tr><td>PR Review</td><td>—</td><td style="color:#b91c1c;font-weight:700">R/A</td><td>—</td><td>—</td><td>—</td></tr>
         <tr><td>dev 环境验证</td><td style="color:#b91c1c;font-weight:700">R/A</td><td>—</td><td>—</td><td>—</td><td>I</td></tr>
+        <tr><td>dev 环境回滚（制品）</td><td style="color:#b91c1c;font-weight:700">R/A</td><td>—</td><td>—</td><td>—</td><td>I</td></tr>
         <tr><td>部署 uat</td><td>—</td><td>—</td><td>—</td><td>—</td><td style="color:#b91c1c;font-weight:700">R/A</td></tr>
         <tr><td>uat 验收</td><td>C</td><td>I</td><td style="color:#b91c1c;font-weight:700">R</td><td style="color:#b91c1c;font-weight:700">R</td><td>—</td></tr>
         <tr><td>部署 prod</td><td>—</td><td>—</td><td>—</td><td>—</td><td style="color:#b91c1c;font-weight:700">R/A</td></tr>
@@ -1225,7 +1254,7 @@ git worktree remove ../order-B</pre>
       <div class="tl-axis"><div class="tl-dot"></div><div class="tl-line"></div></div>
       <div class="tl-content">
         <div class="tl-title">写 plan.md</div>
-        <div class="tl-desc">用 Agent 帮你起草，自己改到"陌生人能照做"。涉及数据库变更必须写回滚脚本。</div>
+        <div class="tl-desc">上游 <code>intent.md</code>（业务意图）由 PM 提供；用 Agent 帮你起草 plan，自己改到"陌生人能照做"。涉及数据库变更必须写回滚脚本。</div>
       </div>
     </div>
     <div class="tl-row">
@@ -1317,18 +1346,18 @@ git worktree remove ../order-B</pre>
   <div class="grid-2">
     <div class="principle">
       <div class="p-num">现阶段（已具备）</div>
-      <div class="p-title">✓ AI Agent 编码 · Lint+单测硬门禁 · Git Flow · Codeup 流水线 · PR 人审</div>
-      <div class="p-desc">基础已经有了，先把手流程走顺。</div>
+      <div class="p-title">✓ AI Agent 编码 · Lint+单测硬门禁 · Git Flow · Codeup 流水线 · PR 人审 · Evals（核心链路）</div>
+      <div class="p-desc">基础已经有了，先把手头流程走顺。</div>
     </div>
     <div class="principle">
       <div class="p-num">下一步（3 个月内）</div>
-      <div class="p-title">AGENTS.md 标准化 + plan.md 流程 + 类型检查硬门禁</div>
-      <div class="p-desc">每个仓库补 AGENTS.md；新需求先走 plan；CI 里把类型检查和覆盖率也加上硬门禁。</div>
+      <div class="p-title">AGENTS.md 标准化 + plan.md 流程 + AI PR Review 辅助 + Evals 配置变更接线</div>
+      <div class="p-desc">每个仓库补 AGENTS.md（含人审范围与双审 reviewer 列表，排队瓶颈可视化）；新需求先走 plan；CI 里类型检查、覆盖率、依赖扫描均为硬门禁；Evals 补上 Agent 配置变更触发；AI 先过一遍 PR 机械性问题，缓解双审排队。</div>
     </div>
     <div class="principle">
       <div class="p-num">中期（6 个月）</div>
-      <div class="p-title">AI PR Review 辅助 + Feature Flag</div>
-      <div class="p-desc">2 个 reviewer 扛 30 人团队会瓶颈，引入 AI 先过一遍机械性问题；交易链路逐步上 Feature Flag 支持灰度。</div>
+      <div class="p-title">AI PR Review 深化 + Feature Flag</div>
+      <div class="p-desc">AI 预审从机械性问题扩展到风险提示；交易链路逐步上 Feature Flag 支持灰度。</div>
     </div>
     <div class="principle">
       <div class="p-num">远期</div>
@@ -1347,7 +1376,7 @@ git worktree remove ../order-B</pre>
         <tr><td><b>PR 周期</b></td><td>从提 PR 到合并的时间</td><td>变短</td></tr>
         <tr><td><b>返工率</b></td><td>PR 被打回改超过 2 次的比例</td><td>下降</td></tr>
         <tr><td><b>生产 bug 数</b></td><td>合并后 1 周内提 bug 的数量</td><td>不上升（这是底线）</td></tr>
-        <tr><td><b>人 review 时长</b></td><td>一个 PR review 平均花多少分钟</td><td>不应该变长</td></tr>
+        <tr><td><b>人 review 时长</b></td><td>一个 PR review 平均花多少分钟。解读批注：变长时<b>先排查人审产能瓶颈（双审排队）</b>，再归因 AI——两者混判会得出「AI 提效失败」的假结论</td><td>不应该变长</td></tr>
       </tbody>
     </table>
   </div>
@@ -1389,8 +1418,20 @@ git worktree remove ../order-B</pre>
   <p class="section-lead">除了常规代码质量，AI Agent 生成的代码有几个特有的危险信号，review 时重点看：</p>
 
   <div class="tip" style="margin:10px 0 16px;">
-    <b>PR 必须附 Prompt 记录：</b>每个 PR 描述里附一段脱敏的 Prompt 对话摘要——看你是真花心思拆解问题、跟 Agent 来回推敲，还是扔一句"帮我修了"加一张报错截图。前者是真思考，后者是批量生成的垃圾。
+    <b>PR 必须附 Prompt 记录：</b>每个 PR 描述里附一段<b>人工撰写</b>的 Prompt 对话摘要——看你是真花心思拆解问题、跟 Agent 来回推敲，还是扔一句"帮我修了"加一张报错截图。前者是真思考，后者是批量生成的垃圾。脱敏标准与代码相同（见硬门禁红线）：手机号 / 身份证 / 密钥 / 内网地址一律打码，<b>禁止整段粘贴对话原文</b>（Prompt 上下文常含真实报错栈和样本数据，整段贴 = 数据泄漏通道）。
   </div>
+
+  <details>
+    <summary>展开：Prompt 摘要模板（5 行，PR 描述直接用）</summary>
+    <div class="detail-body">
+<pre>## Prompt 摘要
+- 背景：一句话说清这个 PR 解决什么问题
+- 关键决策：2-3 条（为什么选这个方向、改了哪些边界条件）
+- 被否方案：1 条（试过什么、为什么放弃）
+- 遗留问题：有则写，无则删掉本行
+（以上由人撰写；敏感数据已打码）</pre>
+    </div>
+  </details>
 
   <div class="table-wrap">
     <table>
@@ -1418,6 +1459,8 @@ git worktree remove ../order-B</pre>
   <div style="max-width:var(--max);margin:0 auto;padding:0 24px;">
     <p><b>参考来源</b></p>
     <p>Anthropic《The AI-Native SDLC Playbook》· oh my pi (omp) 官方文档 · Google DORA 2025 · 团队现状调研（2026-10）</p>
+    <p style="margin-top:14px;"><b>变更记录</b></p>
+    <p>v2.1（2026-10）：评审修订 18 项——三层文档命名统一（intent/spec/plan）；Agent 互审解禁、人审范围改为各项目自定义；补 prod×DDL 回滚顺序、hotfix 完整流程、release fix 流向；Evals 基线纪律与退役规则；覆盖率/依赖扫描直接硬拦；陌生人 Reviewer 未收敛出口；AI 提交身份标注；docs 改人审受控；监控判定基准。完整对照见仓库 commit。</p>
   </div>
 </footer>
 
