@@ -331,6 +331,68 @@ footer{border-top:1px solid var(--border);padding:28px 0;margin-top:40px;color:v
     </table>
   </div>
 
+  <h3>传统角色在 AI-Native SDLC 中干什么？</h3>
+  <p style="font-size:14px;color:var(--text-2);margin-bottom:8px;">现阶段团队仍区分产品经理、前端、后端、测试，部分人已逐步跨职能。角色边界不是消失，而是<b>从"各管一段"变成"围绕 DRI 补位"</b>：</p>
+  <div class="table-wrap">
+    <table>
+      <colgroup><col style="width:16%"><col style="width:44%"><col style="width:40%"></colgroup>
+      <thead><tr><th>角色</th><th>承担什么</th><th>不做什么 / 什么时候补位</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>产品经理</b></td>
+          <td>
+            <ul style="padding-left:16px;margin:0;">
+              <li>写 <code>intent.md</code>：业务意图、目标、验收标准（需求从哪来、做成什么样）</li>
+              <li>需求优先级、范围判断</li>
+              <li>业务结果负责（用户价值、指标）</li>
+            </ul>
+          </td>
+          <td>不写代码、不参与技术选型；评审 <code>spec.md</code> 是否还原业务意图</td>
+        </tr>
+        <tr>
+          <td><b>架构师</b></td>
+          <td>
+            <ul style="padding-left:16px;margin:0;">
+              <li>写 <code>intent.md</code>（技术侧）/ <code>spec.md</code>：技术方案、接口契约、数据模型</li>
+              <li>架构决策、技术债务取舍、复杂方案设计</li>
+              <li>跨模块契约对齐</li>
+            </ul>
+          </td>
+          <td>不逐行写业务代码；核心交易链路架构变更必须过架构师</td>
+        </tr>
+        <tr>
+          <td><b>前端 / 后端工程师</b></td>
+          <td>
+            <ul style="padding-left:16px;margin:0;">
+              <li>可承担 DRI（对应领域需求从头到尾）</li>
+              <li>写 <code>spec.md</code>（自己负责的模块）</li>
+              <li>驱动 Agent 执行、Review 产出、跑测试</li>
+            </ul>
+          </td>
+          <td>超出自己专业领域时（如前端碰复杂 SQL、后端碰交互设计），找对应专业人员补位，不硬扛</td>
+        </tr>
+        <tr>
+          <td><b>测试工程师</b></td>
+          <td>
+            <ul style="padding-left:16px;margin:0;">
+              <li><b>评测集（Evals）完备性兜底</b>：核心链路 20-50 个评测用例由测试维护</li>
+              <li>线上 bug 转评测用例、回归验证</li>
+              <li>核心场景测试人工审核（Agent 写的测试可能"为了绿而绿"）</li>
+            </ul>
+          </td>
+          <td>不重复开发自己跑一遍所有测试——把精力放在评测集建设和人工审核上</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tip" style="margin:12px 0;">
+    <b>DRI 怎么选：</b>传统团队中<b>任何能胜任的角色都可以当 DRI</b>（前端、后端、测试都行），不限于某个岗位。但 DRI 专业知识不完备是常态——<b>专业问题找专业人员补位</b>：DRI 负责流程和调度，卡住的专业点（资金、合规、复杂算法、交互规范）明确找对应的人确认，不许自己拍脑袋。
+  </div>
+  <div class="warn-box" style="margin:8px 0 0;">
+    <b>跨职能是趋势，不是硬性要求：</b>部分人已逐步跨职能（前端会写后端接口、后端会调前端页面），值得鼓励，但<b>跨职能的前提是本职过硬</b>——先把自己领域做到专业，再向外扩展。不要为了"全能"牺牲专业性。
+  </div>
+
   <h3>什么时候必须拉会协同？</h3>
   <p style="font-size:14px;color:var(--text-2);margin-bottom:10px;">高内聚低耦合不是什么都异步。遇到下面这些情况，该拉会还是要拉会：</p>
   <div class="grid-2">
@@ -501,14 +563,14 @@ footer{border-top:1px solid var(--border);padding:28px 0;margin-top:40px;color:v
   <h3>每阶段产出物总览</h3>
   <div class="table-wrap">
     <table>
-      <colgroup><col style="width:15%"><col style="width:20%"><col style="width:30%"><col style="width:35%"></colgroup>
-      <thead><tr><th>阶段</th><th>产出物</th><th>谁审批</th><th>过不了怎么办</th></tr></thead>
+      <colgroup><col style="width:15%"><col style="width:22%"><col style="width:28%"><col style="width:35%"></colgroup>
+      <thead><tr><th>阶段</th><th>产出物</th><th>谁写 / 谁审批</th><th>过不了怎么办</th></tr></thead>
       <tbody>
-        <tr><td><b>1. Plan</b></td><td><code>intent.md</code></td><td>人（DRI）</td><td>没想清楚就别动手，写大白话想法让 AI 追问</td></tr>
-        <tr><td><b>2. Design</b></td><td><code>spec.md</code></td><td>产品负责人</td><td>只写"做什么、做成什么样"，不写"怎么做"</td></tr>
-        <tr><td><b>3. Build</b></td><td><code>plan.md</code> + 代码 + 测试</td><td>工程师</td><td>先改文档再改代码，返工成本低</td></tr>
-        <tr><td><b>4. Test</b></td><td><code>Evals</code> 评测集</td><td>自动回归</td><td>20-50 个真实任务，掉分禁合并</td></tr>
-        <tr><td><b>5. Deploy</b></td><td><code>REVIEW.md</code></td><td>人最终审批</td><td>AI 先审查标记问题，Hooks 拦截违规部署</td></tr>
+        <tr><td><b>1. Plan</b></td><td><code>intent.md</code></td><td><b>产品经理或架构师写</b>；人（DRI）审批</td><td>没想清楚就别动手，写大白话想法让 AI 追问</td></tr>
+        <tr><td><b>2. Design</b></td><td><code>spec.md</code></td><td><b>架构师、工程师写</b>；产品负责人确认业务还原</td><td>只写"做什么、做成什么样"，不写"怎么做"</td></tr>
+        <tr><td><b>3. Build</b></td><td><code>plan.md</code> + 代码 + 测试</td><td>DRI（工程师）写并自审</td><td>先改文档再改代码，返工成本低</td></tr>
+        <tr><td><b>4. Test</b></td><td><code>Evals</code> 评测集</td><td><b>测试工程师兜底完备性</b>；自动回归</td><td>20-50 个真实任务，掉分禁合并</td></tr>
+        <tr><td><b>5. Deploy</b></td><td><code>REVIEW.md</code></td><td>人（DRI）最终审批</td><td>AI 先审查标记问题，Hooks 拦截违规部署</td></tr>
         <tr><td><b>6. Maintain</b></td><td>新 <code>intent.md</code></td><td>AI 诊断 → 人确认</td><td>监控指标异常 → AI 诊断 → 自动回到 Plan 阶段</td></tr>
       </tbody>
     </table>
@@ -1285,6 +1347,9 @@ git worktree remove ../order-B</pre>
     </table>
   </div>
 </section>
+
+<!-- ===== Review 高危信号 ===== -->
+<section id="signals">
   <h2><span class="num">08</span>Review AI Agent 产出时重点盯这些</h2>
   <p class="section-lead">除了常规代码质量，AI Agent 生成的代码有几个特有的危险信号，review 时重点看：</p>
 
