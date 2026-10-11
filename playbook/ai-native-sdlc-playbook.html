@@ -553,6 +553,41 @@ footer{border-top:1px solid var(--border);padding:28px 0;margin-top:40px;color:v
       </div>
     </div>
   </details>
+
+  <details>
+    <summary>合并到 develop 后，Codeup 自动部署 dev 的完整机制</summary>
+    <div class="detail-body">
+      <p style="margin-bottom:10px;">feature 合并到 develop 触发两段流水线：<b>合并前校验 + 合并后部署验收</b>。两段各自独立：</p>
+
+      <h4 style="margin:10px 0 6px;font-size:14px;">两段流水线</h4>
+      <table style="margin:8px 0;">
+        <colgroup><col style="width:22%"><col style="width:42%"><col style="width:36%"></colgroup>
+        <thead><tr><th>阶段</th><th>做什么</th><th>失败怎么办</th></tr></thead>
+        <tbody>
+          <tr><td><b>合并前（PR 校验）</b></td><td>只检查单个项目的问题：Lint、单测、构建</td><td>红灯不能合并，改到绿再提</td></tr>
+          <tr><td><b>合并后（部署流水线）</b></td><td>重新构建制品 → 部署 dev → 单应用 + 跨应用端到端验收</td><td>见下方失败处理</td></tr>
+        </tbody>
+      </table>
+
+      <h4 style="margin:12px 0 6px;font-size:14px;">失败处理与回滚</h4>
+      <ul style="padding-left:18px;font-size:13.5px;line-height:1.8;">
+        <li><b>服务不可用</b>（部署后探活失败、进程起不来）→ <b>自动回滚</b>到上一个无问题构建产物</li>
+        <li><b>测试脚本失败</b>（验收用例挂了）→ <b>人工介入</b>，由 DRI 决定是否回滚（可能是脚本本身写错了）</li>
+        <li><b>回滚目标</b>：上一个"部署后验证通过"的构建产物（制品回滚），不是回退代码分支</li>
+        <li><b>回滚后</b>：develop 分支不 revert，标注"dev 验证失败"，让开发重提 PR 修复</li>
+      </ul>
+
+      <h4 style="margin:12px 0 6px;font-size:14px;">DB 迁移</h4>
+      <ul style="padding-left:18px;font-size:13.5px;line-height:1.8;">
+        <li>feature 开发时就要<b>一起提供数据库回滚脚本</b>（up + down 成对）</li>
+        <li>没提供回滚脚本 = 说明该变更<b>不需要回滚数据库</b>，写清楚即可</li>
+        <li>迁移失败 → 用 down 脚本回滚数据，再回滚制品</li>
+      </ul>
+
+      <h4 style="margin:12px 0 6px;font-size:14px;">跨应用验收</h4>
+      <p style="font-size:13.5px;line-height:1.7;margin-bottom:8px;">交易链路涉及多个服务，验收采用<b>各自独立验收</b>：A 服务合并部署完就验收 A（含对 B 的契约调用验证），不等 B 也更新完。跨应用契约在 spec.md 里定义，验收时按契约 mock 或真实调用验证。</p>
+    </div>
+  </details>
 </section>
 
 <!-- ===== 六阶段 ===== -->
