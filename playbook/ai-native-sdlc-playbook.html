@@ -164,7 +164,7 @@ footer{border-top:1px solid var(--border);padding:28px 0;margin-top:40px;color:v
 <main>
 
 <div class="hero">
-  <div class="eyebrow">ENGINEERING PLAYBOOK · v2.3 · 开放平台事业部</div>
+  <div class="eyebrow">ENGINEERING PLAYBOOK · v2.3.1 · 开放平台事业部</div>
   <h1>AI 时代的开发流程，<br/><span class="accent">从需求到上线</span> 全周期指南</h1>
   <p class="lead">
     这份手册给团队所有工程师：我们如何用 AI Agent（终端编码助手）做需求、设计、编码、测试和发布。
@@ -376,7 +376,7 @@ footer{border-top:1px solid var(--border);padding:28px 0;margin-top:40px;color:v
           <td><b>测试工程师</b></td>
           <td>
             <ul style="padding-left:16px;margin:0;">
-              <li><b>评测集（Evals）完备性兜底</b>：核心链路 20-50 个评测用例由测试维护</li>
+              <li><b>评测集（Evals）完备性兜底</b>：核心链路 20-50 个评测用例由测试维护（<b>设计中——集子尚未建立</b>，起步摸底见 07 节路线图第⓪步；已上线的是单测层 PIT 变异门禁）</li>
               <li>线上 bug 转评测用例、回归验证；连续 6 个月未捕获差异且业务已下线的用例，评测集 owner 可提 MR 退役并留痕</li>
               <li>核心场景测试人工审核（Agent 写的测试可能"为了绿而绿"）</li>
               <li>转型锚点（TL 维护）：当前测试团队 <code>N</code> 人，从【试点链路】起步建设评测集，季度覆盖 <code>M</code> 条核心链路</li>
@@ -619,7 +619,7 @@ footer{border-top:1px solid var(--border);padding:28px 0;margin-top:40px;color:v
         <tr><td><b>1. Plan</b></td><td><code>intent.md</code></td><td><code>intent.md</code>（业务意图、验收标准）内容由<b>产品经理主笔</b>（经工单需求模板提供，DRI/工具转成仓库文件）、产品负责人审。工单管状态排期，<code>intent.md</code> 管内容——双向一行链接，重叠字段为零</td><td>没想清楚就别动手，写大白话想法让 AI 追问</td></tr>
         <tr><td><b>2. Design</b></td><td><code>spec.md</code></td><td><b>架构师、工程师写</b>；产品负责人确认业务还原，资深工程师 review 技术方案</td><td>spec 定方案与契约边界（技术方案、接口契约、数据模型、DDL 及回滚）——这就是"怎么做"的设计部分；实现步骤留给 <code>plan.md</code></td></tr>
         <tr><td><b>3. Build</b></td><td><code>plan.md</code> + 代码 + 测试</td><td><code>plan.md</code> 由 <b>DRI 基于 spec.md 转抄撰写、DRI 审</b>；代码 DRI 写并自审</td><td>模块清单 / DB 变更必须是<b>对 spec 的转抄</b>而非预测；评审 plan 即校验 DRI 是否读懂 spec</td></tr>
-        <tr><td><b>4. Test</b></td><td><code>Evals</code> 评测集</td><td><b>测试工程师兜底完备性</b>；自动回归</td><td>20-50 个真实任务，掉分禁合并</td></tr>
+        <tr><td><b>4. Test</b></td><td><code>Evals</code> 评测集</td><td><b>测试工程师兜底完备性</b>；自动回归</td><td>20-50 个真实任务，掉分禁合并（<b>设计中</b>：集子未建，见 07 路线图⓪）</td></tr>
         <tr><td><b>5. Deploy</b></td><td>无（发布流程环节，不新增文档产出）</td><td>人（DRI）最终审批</td><td>AI 先审查标记问题，Hooks 拦截违规部署</td></tr>
         <tr><td><b>6. Maintain</b></td><td>新 <code>intent.md</code></td><td>AI 诊断 → 人确认</td><td>监控指标异常 → AI 诊断 → 自动回到 Plan 阶段</td></tr>
       </tbody>
@@ -926,11 +926,12 @@ git worktree remove ../order-B</pre>
 
     <h3>Evals 评测闭环（核心场景）</h3>
     <p style="font-size:14px;color:var(--text-2);margin-bottom:8px;">光靠单测不够——核心链路要维护一个 <b>20-50 个真实任务的评测集</b>，每次代码变更或 Agent 配置变更都自动跑一遍，通过率掉了就禁止合并。</p>
+    <p style="font-size:13px;color:var(--text-3);margin-bottom:8px;"><b>现状（v2.3.1 纠偏，2026-10 盘点）：</b>gtsp-wop-service 的<b>单测层变异门禁已上线</b>（PIT：3233 变异体、击杀率 89-92%、pre-push 阈值 89）——"用变异证明用例有效"的纪律已在单测层运转；但 <b>agent 任务级 Evals 评测集尚未建立</b>，本节为设计目标，起步需先摸底用例来源（历史 bug 回放是最便宜的第一批）。</p>
     <ul style="padding-left:20px;font-size:14px;line-height:1.8;">
       <li><b>同等待遇（3 个月内接线，<b>排期第一优先</b>）：</b>代码变更和 Agent 配置变更（AGENTS.md / review-scope.yml / Skills / Hooks 改动）一视同仁都要跑 Evals——<b>当前 CI 仅代码变更触发</b>。接线前，review-scope.yml 的 TL 闸门是配置治理的唯一防线，这也是把接线排第一的原因</li>
       <li><b>持续回归：</b>不是提测前才跑，每次 MR 自动跑</li>
       <li><b>掉分禁合并：</b>通过率比基线低就红，不许强合。基线三条纪律：① 初始基线 = 评测集首次全量跑通率，记录在仓（如 <code>evals/baseline.json</code>）；② 基线<b>只升不降</b>，下调需 MR + Tech Lead approve 并留痕；③ 新用例合入时基线重算为 min(当前通过率, 旧基线)，新用例不得放松旧约束</li>
-      <li><b>用例上岗纪律：</b>一个用例<b>必须先证明自己能抓差异，才能参与基线</b>——从未抓到过差异的评测集配上"掉分禁合并"，等于用随机数挡合并：拦不住真 bug，却会拦住真功能。两条路径任选：① <b>回放历史 bug</b>（线上事故转的用例天然合格）；② <b>mutation 变异测试</b>——对被测代码做人工变异（改边界、删幂等检查），用例必须变红。从未变红的新用例挂「观察」状态：不进基线、不触发禁合并。<b>现有集子先做一轮变异体检</b>（一天工作量），抓不到差异的标「观察」</li>
+      <li><b>用例上岗纪律：</b>一个用例<b>必须先证明自己能抓差异，才能参与基线</b>——从未抓到过差异的评测集配上"掉分禁合并"，等于用随机数挡合并：拦不住真 bug，却会拦住真功能。两条路径任选：① <b>回放历史 bug</b>（线上事故转的用例天然合格）；② <b>mutation 变异测试</b>——对被测代码做人工变异（改边界、删幂等检查），用例必须变红。从未变红的新用例挂「观察」状态：不进基线、不触发禁合并。<b>已有集子的仓先做一轮变异体检</b>（一天工作量），抓不到差异的标「观察」；集子还没建的仓（现状 = 多数），首批用例从历史 bug 回放起步、天然走路径①</li>
       <li><b>线上 bug 转 Evals：</b>每次线上修复后，补一个评测用例进集子里，下次自动检测</li>
       <li><b>用例退役：</b>连续 6 个月未捕获差异且业务已下线的用例，评测集 owner 可提 MR 退役并留痕（防止集子只增不减变成新屎山）</li>
     </ul>
@@ -1374,13 +1375,13 @@ git worktree remove ../order-B</pre>
   <div class="grid-2">
     <div class="principle">
       <div class="p-num">现阶段（已接线 / 试点中）</div>
-      <div class="p-title">✓ 已接线：AI Agent 编码 · Lint+单测硬门禁 · Codeup 流水线 · MR 人审｜◐ 试点中：Evals（核心链路）｜ⓘ 新流程：master 单主干 + MR 发布（v2.3 起，替代原 Git Flow）</div>
-      <div class="p-desc">手册全量使用三态标记【已接线 / 试点中 / 设计中】，现状与目标态不许混排在现在时态里——新人是拿着这份手册照做的。Evals 在接入 CI 硬门禁前不承担禁合并职责。</div>
+      <div class="p-title">✓ 已接线：AI Agent 编码 · Lint+单测硬门禁 · 单测变异门禁（PIT，gtsp-wop-service 阈值 89）· Codeup 流水线 · MR 人审｜ⓘ 设计中：Evals（agent 任务级评测集未建，起步摸底待排期）｜ⓘ 新流程：master 单主干 + MR 发布（v2.3 起，替代原 Git Flow）</div>
+      <div class="p-desc">手册全量使用三态标记【已接线 / 试点中 / 设计中】，现状与目标态不许混排在现在时态里——新人是拿着这份手册照做的。v2.3.1 纠偏：Evals 此前标"试点中"不实——gtsp-wop-service 不存在 agent 任务级评测集（单测层 PIT 变异门禁已上线，是另一个机制）；集子建立前 Evals 不承担任何门禁职责。</div>
     </div>
     <div class="principle">
       <div class="p-num">下一步（3 个月内，按优先级排序）</div>
-      <div class="p-title">① Evals 配置变更接线（第一优先）→ ② AGENTS.md 标准化 + review-scope.yml 抽离 → ③ plan.md 流程 → ④ AI PR Review 辅助</div>
-      <div class="p-desc">① 配置变更（AGENTS.md / review-scope.yml / Skills / Hooks）触发 Evals 回归——hooks 已确认可落 Claude Code，无技术障碍；② 每个仓库补 AGENTS.md + review-scope.yml（人审范围独立成文件，含双审 reviewer 列表，排队瓶颈可视化）；③ 新需求先走 intent → spec → plan；CI 里类型检查、覆盖率、依赖扫描均为硬门禁；④ AI 先过一遍 MR 机械性问题，缓解非核心 MR 的人审负担（注：核心链路双审队列的解法见 Deploy 章节风险分档，量化分桶先行）。</div>
+      <div class="p-title">⓪ Evals 集子起步摸底（用例来源盘点：历史 bug 回放第一批）→ ① Evals 配置变更接线（第一优先）→ ② AGENTS.md 标准化 + review-scope.yml 抽离 → ③ plan.md 流程 → ④ AI PR Review 辅助</div>
+      <div class="p-desc">⓪ v2.3.1 增补：集子不存在则接线无从谈起——先盘点 20-50 个真实任务从哪来（历史 bug 回放最便宜且天然满足上岗纪律路径①），摸底结论决定立项或改判"Evals 不适用本栈、以 PIT 为等价物"；① 配置变更（AGENTS.md / review-scope.yml / Skills / Hooks）触发 Evals 回归——hooks 已确认可落 Claude Code，无技术障碍；② 每个仓库补 AGENTS.md + review-scope.yml（人审范围独立成文件，含双审 reviewer 列表，排队瓶颈可视化；gtsp-wop-developer 已有模板落仓）；③ 新需求先走 intent → spec → plan；CI 里类型检查、覆盖率、依赖扫描均为硬门禁；④ AI 先过一遍 MR 机械性问题，缓解非核心 MR 的人审负担（注：核心链路双审队列的解法见 Deploy 章节风险分档，量化分桶先行——分桶脚本已落 tools/review-queue-bucket.py）。</div>
     </div>
     <div class="principle">
       <div class="p-num">中期（6 个月）</div>
@@ -1488,6 +1489,7 @@ git worktree remove ../order-B</pre>
     <p><b>参考来源</b></p>
     <p>Anthropic《The AI-Native SDLC Playbook》· oh my pi (omp) 官方文档 · Google DORA 2025 · 团队现状调研（2026-10）</p>
     <p style="margin-top:14px;"><b>变更记录</b></p>
+    <p>v2.3.1（2026-10）：现状标记纠偏——三态标记纪律首先适用于自己：Evals"试点中"改"设计中"（盘点证实 gtsp-wop-service 不存在 agent 任务级评测集，此前标记不实），单测变异门禁（PIT 阈值 89）移入"已接线"栏；Evals 章节补现状段（集子未建、PIT 已运转）；用例上岗纪律的"变异体检"改为针对已有集子、未建集子从历史 bug 回放起步；路线图增第⓪步"Evals 集子起步摸底"（摸底结论决定立项或改判 PIT 为等价物）。</p>
     <p>v2.3（2026-10）：分支模型重构——废弃 develop/main 双主干 Git Flow，改为 <b>master 单主干 + MR 发布</b>：feature 一律从 master 切出；上线提合并到 master 的 MR，MR 只承担<b>审查与构建部署，prod 验证通过前锁定不合并</b>；多特性同时上线用 release/* 聚合多分支构建部署，验证通过后 MR 合入 master 并打 tag，本批 feature 的 MR 随即关闭。环境映射、merge/rebase 规则、"先合并还是先部署"、dev 自动部署机制、线上修复路径（取消 hotfix 分支，按普通特性流程）、硬门禁②③④、上线 SOP 时序图与时间线同步改写；uat 由测试手动部署、prod 由运维手动部署；master 永远等于已上线验证通过的代码，回滚只回制品不动主干。新增"两个特性一起上线、一个不能上"处理方案折叠块（本批不聚合受阻分支，或 Feature Flag 隔离）。全文 PR 术语统一为 MR。</p>
     <p>v2.2（2026-10）：对读 Anthropic 原版后修订 7 项——① 红线补确定性执行层（Claude Code hooks + CI 兜底），纪律=红线必须建议层+确定性层双层映射，只有建议层的降级为约定；② 人审范围从 AGENTS.md 抽离为 review-scope.yml（TL 单向阀：DRI 只可收紧；该文件自身变更永远人审），Evals 配置变更接线提前为第一优先；③ 顺序回归 intent → spec → plan 三层（plan.md 移至 spec 定稿后，模块/DB 声明改为对 spec 的转抄），消除"spec 只写做什么"矛盾句；④ 工单管状态、intent.md 管内容、双向一行链接（工单需求模板对齐 intent 章节）；⑤ 核心链路内部分高风险/低风险两档（低风险=资深单人+强制陌生人 Reviewer，启用前双审排队量化分桶）；⑥ Prompt 摘要降级为建议性信号，验真改为 reviewer PR 评论抽问；⑦ 手册全量三态标记【已接线/试点中/设计中】，Evals 增用例上岗纪律（bug 回放或 mutation 变红才进基线）。完整对照见仓库 commit。</p>
     <p>v2.1（2026-10）：评审修订 18 项——三层文档命名统一（intent/spec/plan）；Agent 互审解禁、人审范围改为各项目自定义；补 prod×DDL 回滚顺序、hotfix 完整流程、release fix 流向；Evals 基线纪律与退役规则；覆盖率/依赖扫描直接硬拦；陌生人 Reviewer 未收敛出口；AI 提交身份标注；docs 改人审受控；监控判定基准。完整对照见仓库 commit。</p>
